@@ -1,0 +1,213 @@
+/* Base Styling */
+html, body {
+  height: 120%;
+  margin: 0;
+  padding: 0;
+  background-color: #808080; /* Grey background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Font */
+.silkscreen-regular {
+  font-family: "Silkscreen", sans-serif;
+  font-weight: 400;
+}
+
+.silkscreen-bold {
+  font-family: "Silkscreen", sans-serif;
+  font-weight: 700;
+}
+
+/* Home Button */
+.home-button {
+  font-size: 1.2rem;
+  color: #0262bb;
+  text-decoration: none;
+  padding: 10px 15px;
+  border: 1px solid #0262bb;
+  border-radius: 5px;
+  transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+.home-button:hover {
+  color: #333;
+}
+
+/* Navbar */
+.navbar {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  background-color: #333333;
+  color: #ffffff;
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+.navbar nav a {
+  color: #ffffff;
+  text-decoration: none;
+  margin: 0 15px;
+  font-size: 1.2rem;
+  transition: color 0.3s;
+}
+
+
+/* Main Container Styling */
+.container {
+  background-color: #333333;
+  color: #ffffff;
+  width: 80%;
+  padding: 0px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+  margin-top: 20px;
+}
+
+/* Game Section Styling */
+#game {
+  text-align: center;
+  font-size: 1.5rem;
+  margin-top: 10px;
+}
+
+.gameContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0px;
+  background-color: #333333;
+  border-radius: 0px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+  max-width: 800px;
+  overflow: hidden;
+  margin: 0 auto;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Canvas Styling */
+#gameCanvas {
+  display: block;
+  border: 2px solid #ffffff;
+  border-radius: 8px;
+  background-color: black;
+  width: 100%;
+  height: 100%;
+}
+
+/* Canvas Wrapper */
+.canvasContainer {
+  position: relative;
+  width: 800px;
+  height: 600px;
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+/* Game Buttons */
+.game-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+/* Individual Button Styling */
+#startButton {
+  position: absolute;
+  top: 67%;                    /* center vertically */
+  left: 50%;                    /* center horizontally */
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  background-color: #28a745; /* green background */
+  color: white;              /* white text */
+  font-size: 20px;        
+  padding: 15px 30px;
+  border: none;                /*remove default  border and round corners */
+  border-radius: 5px;
+  cursor: pointer;             /*change cursor on hover */
+  font-family: 'Silkscreen', sans-serif;
+  transition: background-color 0.3s; /*smooth hover effect */
+}
+
+/* style for restart button */
+#restartButton {
+  position: absolute;
+  top: calc(70% + 48px) !important; /* position below 'GAME OVER' text */
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  background-color: #dc3545; /* red */
+  color: white;
+  font-size: 20px;
+  padding: 15px 30px; 
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: 'Silkscreen', sans-serif;
+  transition: background-color 0.3s;
+}
+
+#nextLevelButton {
+position: absolute;
+  top: 72%;                    /* center vertically */
+  left: 50%;                    /* center horizontally */
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  background-color: #208cff; /* same blue as 'level pass' */
+  color: white;              /* white text */
+  font-size: 20px;        
+  padding: 15px 30px;
+  border: none;                /*remove default  border and round corners */
+  border-radius: 5px;
+  cursor: pointer;             /*change cursor on hover */
+  font-family: 'Silkscreen', sans-serif;
+  transition: background-color 0.3s; /*smooth hover effect */
+}
+
+#startButton {
+  background-color: #28a745;
+}
+
+#restartButton {
+  background-color: #dc3545;
+  top: calc(50% + 48px);
+}
+
+#nextLevelButton {
+  background-color: #208cff;
+}
+
+/* Button Hover Effects */
+#startButton:hover {
+  background-color: #218838;
+}
+
+#restartButton:hover {
+  background-color: #c82333;
+}
+
+#nextLevelButton:hover {
+  background-color: #1f83ec;
+}

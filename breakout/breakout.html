@@ -1,0 +1,39 @@
+<!-- game.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brick Breaker Game</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css"> <!-- Link to the main style file -->
+</head>
+<body>
+    <div class="container">
+        <!-- Navbar -->
+        <header class="navbar">
+            <nav>
+                <a href="../index.html" class="home-button">&larr; Home</a>
+            </nav>
+        </header>
+
+        <!-- Main game content -->
+        <section id="game">
+            <h1>Brick Breaker Game</h1>
+            <div class="gameContainer">
+                <canvas id="gameCanvas" width="800" height="600"></canvas>
+                <div class="game-buttons">
+                    <button id="startButton">Start Game</button>
+                    <button id="restartButton">Restart Game</button>
+                    <button id="nextLevelButton">Next Level</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script> <!-- Link to the game logic -->
+</body>
+</html>

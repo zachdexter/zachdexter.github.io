@@ -39,12 +39,12 @@ body {
 }
 
 .navbar nav a:hover {
-    color: #ffcc00;
+    color: #0262bb;
 }
 
 section {
     padding: 80px 20px;
-    margin-top: 50px;
+    margin-top: 20px;
 }
 
 /*container styling*/
@@ -136,10 +136,35 @@ h1 {
     border-radius: 8px;
 }
 
+.breakout-link {
+    color: #0262bb;
+    text-decoration: underline;
+    font-weight: bold;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.breakout-link:visited {
+    color: #0262bb;
+}
+
+.breakout-link:hover {
+    color: #9fd1ff;
+}
+
 #resume {
     text-align: center;
     font-size: 1.5rem;
-    margin-top: 20px;
+    margin-top: 0px;
+}
+
+.pdf-viewer {
+    margin-top: 2%;
+    width: 80%;
+    max-width: 600px;
+    height: 400px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 /*paragraph styling*/
