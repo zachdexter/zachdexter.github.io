@@ -1,1 +1,1 @@
-web: gunicorn homeLibrary.app:app
+web: gunicorn --chdir homeLibrary app:app
