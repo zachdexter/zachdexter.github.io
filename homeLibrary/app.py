@@ -4,6 +4,9 @@ import sqlite3
 
 app = Flask(__name__)
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+db_path = os.path.join(BASE_DIR, 'library.db')
+
 #route to serve web page
 @app.route('/')
 def home():
@@ -17,8 +20,10 @@ def get_books():
     search_query = data.get('search', '').strip().lower() #get search query
     if sort_by not in ['Authors.Name', 'Books.Title', 'Books.Genre']:
         sort_by = 'Authors.Name' #fallback to default
-    conn = sqlite3.connect('library.db')
-    cursor = conn.cursor()
+    
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor() 
+   
 
     #construct query
     if search_query:
