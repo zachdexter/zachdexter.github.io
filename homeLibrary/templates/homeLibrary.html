@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home Library System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <nav>
+            <a href="index.html" class="home-button">← Home</a>
+        </nav>
+    </header>
+    <div class="container">
+        <h1>Home Library</h1>
+        <div class="controls">
+            <div class="sort-container">
+                <label for="sort-options">Sort By:</label>
+                <select id="sort-options" onchange="handleSortChange()">
+                    <option value="Authors.Name">Author</option>
+                    <option value="Books.Title">Title</option>
+                    <option value="Books.Genre">Genre</option>
+                </select>
+            </div>
+            <div class="search-container">
+                <input type="text" id="search-box" placeholder="Search by title or author" oninput="handleSearch()"/>
+            </div>
+        </div>
+        <table id="books-table">
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Genre</th>
+            </tr>
+        </table>
+        <script src="{{ url_for('static', filename='library.js') }}"></script>
+        <script>
+            fetchBooks();
+        </script>
+    </div>
+</body>
+</html>

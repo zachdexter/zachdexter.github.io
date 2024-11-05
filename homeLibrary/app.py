@@ -7,7 +7,7 @@ app = Flask(__name__)
 #route to serve web page
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return render_template('homeLibrary.html')
 
 #route to fetch books from database
 @app.route('/books', methods=['POST'])

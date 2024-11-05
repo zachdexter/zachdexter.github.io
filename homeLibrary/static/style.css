@@ -76,8 +76,27 @@ label {
     color: #ffffff; /* Matches the existing text color */
 }
 
-#sort-options {
-    margin-bottom: 10px;
+/* Container for the controls */
+.controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Style for the sort-container */
+.sort-container {
+    display: flex;
+    align-items: center;
+}
+
+.sort-container label {
+    margin-right: 10px;
+    font-size: 16px;
+    color: #ffffff;
+}
+
+.sort-container select {
     font-size: 16px;
     padding: 5px 10px;
     border: 1px solid #ddd;
@@ -88,21 +107,23 @@ label {
     cursor: pointer;
 }
 
-#sort-options:hover {
+.sort-container select:hover {
     background-color: #3a3a3a; /* Slightly lighter background on hover */
 }
 
-#sort-options:focus {
-    border-color: #08680c; /* Highlight border color to match table header */
+.sort-container select:focus {
+    border-color: #08680c; /* Highlight border color */
 }
 
-/* Style for search box */
+/* Style for the search-container */
+.search-container {
+    position: relative;
+}
+
 #search-box {
     width: 300px;
     padding: 10px 15px;
-    margin: 15px 0;
     font-size: 16px;
-    margin-left: 60%;
     border: 2px solid #ccc;
     border-radius: 25px;
     transition: border-color 0.3s, box-shadow 0.3s;
@@ -111,23 +132,9 @@ label {
 #search-box:focus {
     outline: none;
     border-color: #08680c;
-    box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+    box-shadow: 0 0 8px rgba(8, 104, 12, 0.5);
 }
 
 #search-box::placeholder {
     color: #888;
-}
-
-.search-container {
-    position: relative;
-    display: inline-block;
-}
-
-.search-container .search-icon {
-    position: absolute;
-    top: 50%;
-    left: 12px;
-    transform: translateY(-50%);
-    color: #888;
-    font-size: 18px;
 }
