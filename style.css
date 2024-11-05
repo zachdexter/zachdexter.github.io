@@ -131,23 +131,38 @@ h1 {
 }
 
 .breakoutSS {
-    width: 20vw !important;
+    width: 40% !important;
     height: auto !important;
     border-radius: 8px;
 }
 
-.breakout-link {
+.library {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-left: 10%;
+    margin-right: 10%;
+    padding: 20px 0;
+}
+
+.librarySS {
+    width: 50% !important;
+    height: auto !important;
+    border-radius: 8px;
+}
+
+.project-link {
     color: #0262bb;
     text-decoration: underline;
     font-weight: bold;
     transition: color 0.3s ease, transform 0.3s ease;
 }
 
-.breakout-link:visited {
+.project-link:visited {
     color: #0262bb;
 }
 
-.breakout-link:hover {
+.project-link:hover {
     color: #9fd1ff;
 }
 
