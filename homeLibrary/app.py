@@ -6,7 +6,7 @@ import logging
 
 app = Flask(__name__)
 
-bind = '0.0.0.0:' + os.environ.get('PORT', '8000')
+
 
 # app.wsgi_app = WhiteNoise(app.wsgi_app, root=os.path.join(app.root_path, 'static'), prefix='static/')
 
