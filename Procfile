@@ -1,1 +1,1 @@
-web: sh -c 'gunicorn --chdir homeLibrary app:app --bind 0.0.0.0:$PORT'
+web: gunicorn --chdir homeLibrary app:app -c homeLibrary/gunicorn_config.py
