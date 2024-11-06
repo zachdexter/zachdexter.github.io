@@ -1,8 +1,14 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, send_from_directory
 import os
 import sqlite3
 
 app = Flask(__name__)
+
+#route to serve static files
+@app.route('/static/<path:filename>')
+def staticfiles(filename):
+    return send_from_directory(os.path.join(app.root_path, 'static'), filename)
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.join(BASE_DIR, 'library.db')
