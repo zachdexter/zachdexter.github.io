@@ -9,12 +9,11 @@ function handleSearch() {
 async function fetchBooks(sortBy = 'Authors.Name', searchQuery = '') {
     console.log('Sorting by: ', sortBy);
     try {
-        const response = await fetch('/books', {
-            method: 'POST',
+        const response = await fetch(`/books?sort_by=${encodeURIComponent(sortBy)}&search=${encodeURIComponent(searchQuery)}`, {
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ sort_by: sortBy, search: searchQuery }),
         });
         if (!response.ok) {
             throw new Error('Network response was not ok');

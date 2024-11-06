@@ -2,6 +2,7 @@ from flask import Flask, render_template, jsonify, request, send_from_directory
 # from whitenoise import WhiteNoise
 import os
 import sqlite3
+import logging
 
 app = Flask(__name__)
 
@@ -12,6 +13,7 @@ app = Flask(__name__)
 # def staticfiles(filename):
 #     return send_from_directory(os.path.join(app.root_path, 'static'), filename)
 
+logging.basicConfig(level=logging.DEBUG)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.join(BASE_DIR, 'library.db')
@@ -24,11 +26,21 @@ def home():
 #route to fetch books from database
 @app.route('/books', methods=['POST'])
 def get_books():
-    data = request.get_json()
-    sort_by = data.get('sort_by', 'Authors.Name') #default to sort authors alphabetically
-    search_query = data.get('search', '').strip().lower() #get search query
-    if sort_by not in ['Authors.Name', 'Books.Title', 'Books.Genre']:
-        sort_by = 'Authors.Name' #fallback to default
+    if request.method == 'POST':
+        app.logger.debug('Received POST request to /books')
+        data = request.get_json()
+        app.logger.debug(f'Request data: {data}')
+        sort_by = data.get('sort_by', 'Authors.Name')
+        search_query = data.get('serach', '').strip().lower()
+        if sort_by not in ['Authors.Name', 'Books.Title', 'Books.Genre']:
+            sort_by = 'Authors.Name' #fallback to default
+    else:
+        app.logger.debug('Received GET request to /books')
+        sort_by = request.args.get('sort_by', 'Authors.Name')
+        search_query = request.args.get('search', '').strip().lower()
+        if sort_by not in ['Authors.Name', 'Books.Title', 'Books.Genre']:
+            sort_by = 'Authors.Name' #fallback to default
+    
     
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor() 
