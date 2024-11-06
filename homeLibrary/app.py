@@ -21,11 +21,13 @@ db_path = os.path.join(BASE_DIR, 'library.db')
 #route to serve web page
 @app.route('/')
 def home():
+    app.logger.debug('Home route accessed')
     return render_template('homeLibrary.html')
 
 #route to fetch books from database
 @app.route('/books', methods=['POST'])
 def get_books():
+    app.logger.debug('Accessed /books endpoint')
     if request.method == 'POST':
         app.logger.debug('Received POST request to /books')
         data = request.get_json()
