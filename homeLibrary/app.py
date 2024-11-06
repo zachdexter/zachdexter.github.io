@@ -1,8 +1,11 @@
 from flask import Flask, render_template, jsonify, request, send_from_directory
+from whitenoise import WhiteNoise
 import os
 import sqlite3
 
-app = Flask(__name__, static_folder='static', static_url_path='/static')
+app = Flask(__name__)
+
+app.wsgi_app = WhiteNoise(app.wsgi_app, root=os.path.join(app.root_path, 'static'), prefix='static/')
 
 #route to serve static files
 @app.route('/static/<path:filename>')

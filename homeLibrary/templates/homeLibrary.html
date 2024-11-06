@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Home Library System</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <header class="navbar">
@@ -32,7 +32,7 @@
                 <th>Genre</th>
             </tr>
         </table>
-        <script src="{{ url_for('static', filename='library.js') }}"></script>
+        <script src="/static/library.js"></script>
         <script>
             fetchBooks();
         </script>
