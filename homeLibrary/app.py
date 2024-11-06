@@ -2,7 +2,7 @@ from flask import Flask, render_template, jsonify, request, send_from_directory
 import os
 import sqlite3
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 #route to serve static files
 @app.route('/static/<path:filename>')
