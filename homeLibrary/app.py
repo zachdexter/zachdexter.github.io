@@ -71,4 +71,4 @@ def get_books():
     return jsonify([{'title': title, 'author': author, 'genre': genre} for title, author, genre in books])
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
