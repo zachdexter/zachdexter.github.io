@@ -5,35 +5,126 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brick Breaker Game</title>
-    <link rel="stylesheet" type="text/css" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../style.css"> <!-- Link to the main style file -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Simplified Styling for Brick Breaker Page */
+        body {
+            background: linear-gradient(135deg, #181c2a 0%, #232946 100%);
+            color: #f7f7fa;
+            font-family: 'JetBrains Mono', monospace;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: rgba(24, 28, 42, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(31, 38, 135, 0.2);
+            padding: 2rem;
+            max-width: 800px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .navbar {
+            margin-bottom: 1.5rem;
+        }
+
+        .home-button {
+            font-size: 1rem;
+            color: #9fd1ff;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 2px solid #9fd1ff;
+            border-radius: 8px;
+            background: transparent;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        .home-button:hover {
+            background: #1a4fa3;
+            color: #fff;
+            border-color: #1a4fa3;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #9fd1ff;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 8px rgba(26, 79, 163, 0.5);
+        }
+
+        #gameCanvas {
+            display: block;
+            margin: 0 auto 1.5rem auto;
+            border: 2px solid #9fd1ff;
+            border-radius: 8px;
+            background: #10131a;
+            box-shadow: 0 4px 16px rgba(26, 79, 163, 0.2);
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+        }
+
+        .game-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .game-buttons button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 2px solid #9fd1ff;
+            background: transparent;
+            color: #9fd1ff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            cursor: pointer;
+        }
+
+        .game-buttons button:hover {
+            background: #1a4fa3;
+            color: #fff;
+            border-color: #1a4fa3;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .game-buttons button {
+                font-size: 0.9rem;
+                padding: 8px 16px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <!-- Navbar -->
         <header class="navbar">
-            <nav>
-                <a href="../index.html" class="home-button">&larr; Home</a>
-            </nav>
+            <a href="../index.html" class="home-button">&larr; Home</a>
         </header>
 
         <!-- Main game content -->
-        <section id="game">
-            <h1>Brick Breaker Game</h1>
-            <div class="gameContainer">
-                <canvas id="gameCanvas" width="800" height="600"></canvas>
-                <div class="game-buttons">
-                    <button id="startButton">Start Game</button>
-                    <button id="restartButton">Restart Game</button>
-                    <button id="nextLevelButton">Next Level</button>
-                </div>
-            </div>
-        </section>
+        <h1>Brick Breaker Game</h1>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div class="game-buttons">
+            <button id="startButton">Start Game</button>
+            <button id="restartButton" style="display: none;">Restart Game</button>
+            <button id="nextLevelButton" style="display: none;">Next Level</button>
+        </div>
     </div>
 
     <script src="script.js"></script> <!-- Link to the game logic -->
+   
 </body>
 </html>

@@ -30,7 +30,7 @@ let paddleY = (canvas.height - paddleHeight - 100);
 let ballRadius = 6;
 let x = canvas.width /2;    //starting x coord 
 let y = canvas.height - 250; //starting y coord
-let maxSpeed = 5;
+let maxSpeed = 2.5;
 let dx = 0;      //x vel
 let dy = (maxSpeed); //y vel
 
@@ -506,8 +506,8 @@ function draw() {
                     //ball starts moving 3 seconds after start
                     ballStartTimer = setTimeout(() => { //setTimeout delays function 3000ms
                         dy = maxSpeed;
-                        dx = Math.random(); //set start x vel to range between -.5 and .5
-                        if(Math.random() > 0.5) 
+                        dx = (Math.random() - 0.5) * 0.6; //set start x vel to range between -.3 and .3
+                        if(Math.random() > 0.3) 
                             dx = -dx
                         ballStartTimer = null;
                     }, 3000);
