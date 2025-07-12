@@ -1,1 +1,0 @@
-web: gunicorn --chdir homeLibrary app:app -c homeLibrary/gunicorn_config.py
