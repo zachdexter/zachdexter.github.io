@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Ship hull — same polygon as canvas drawShip(), scaled to 32x32 -->
+  <!-- Original coords: nose(0,-13), shoulders(±7,3), wing tips(±10,8),
+       wing inner(±5,7), base(±3,7), center notch(0,5)
+       Scale 1.33×, offset (16, 19.3) to center in 32×32 -->
+  <polygon
+    points="16,2 25.3,23.3 29.3,29.9 22.7,28.6 20,28.6 16,26 12,28.6 9.4,28.6 2.7,29.9 6.7,23.3"
+    fill="#0d2a5e"
+    stroke="#7dd3fc"
+    stroke-width="1.6"
+    stroke-linejoin="round"
+  />
+  <!-- Cockpit — ellipse at (0,-3) scaled: cx=16, cy=15.3, rx≈3, ry≈5 -->
+  <ellipse cx="16" cy="15" rx="3" ry="5" fill="#7dd3fc" opacity="0.82"/>
+</svg>
