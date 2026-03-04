@@ -7,7 +7,7 @@ const NAV_ITEMS = [
   { id: 'resume', label: 'Resume' },
 ]
 
-export default function Navbar({ activeSection, onNavigate, asteroidScore = 0 }) {
+export default function Navbar({ activeSection, onNavigate }) {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const handleNav = (id) => {
@@ -63,12 +63,7 @@ export default function Navbar({ activeSection, onNavigate, asteroidScore = 0 })
 
   return (
     <nav style={navStyle}>
-      <div style={logoStyle}>
-        {asteroidScore > 0
-          ? <span style={{ color: 'var(--accent)', letterSpacing: '2px' }}>⬡ {asteroidScore}</span>
-          : 'Z'
-        }
-      </div>
+      <div style={logoStyle}>Z</div>
 
       {/* Desktop nav */}
       <div style={desktopNavStyle} className="desktop-nav">

@@ -1,67 +1,53 @@
 import { useEffect, useRef } from 'react'
-import { shipPosition, polaroidBounds, polaroidHitHandler, satelliteBounds, satelliteHitHandler, dockingState, shipControlDisabled, nowIconBounds, nowIconHitHandler, monitorBounds } from '../store'
+import { shipPosition, polaroidBounds, polaroidHitHandler, satelliteBounds, satelliteHitHandler, dockingState, shipControlDisabled, nowIconBounds, nowIconHitHandler, monitorBounds, activeSection } from '../store'
 
 // --- Constants ---
-const TURN_SPEED    = 0.06
-const THRUST        = 0.12
+const TURN_SPEED    = 0.09
+const THRUST        = 0.14
 const MAX_SPEED     = 6.5
 const DRAG          = 0.987
 const LASER_SPEED   = 14
 const LASER_DECAY   = 0.024
 const FIRE_COOLDOWN = 10
-const ENTRY_FRAMES  = 55     // ~0.92 s at 60 fps
 const SHIP_RADIUS   = 7
-const INVINCIBLE_T  = 50
-const EDGE_MARGIN   = 32     // px past edge that triggers exit
-const WALL_INSET    = 14     // ship is clamped this many px inside screen edges (walls)
-const TRAIL_LENGTH  = 12     // contrail history length
-const FOCUS_DELAY   = 7000   // ms before focus indicator appears
+const EDGE_MARGIN   = 32    // px past edge that triggers exit
+const WALL_INSET    = 14    // ship is clamped this many px inside screen edges (dead-end walls)
+const TRAIL_LENGTH  = 12    // contrail history length
+const FOCUS_DELAY   = 7000  // ms before focus indicator appears
 
-// --- Helpers ---
-function makeAsteroidShape(radius) {
-  const n = 8 + Math.floor(Math.random() * 4)
-  return Array.from({ length: n }, (_, i) => {
-    const a = (i / n) * Math.PI * 2
-    const r = radius * (0.6 + Math.random() * 0.6)
-    return { x: Math.cos(a) * r, y: Math.sin(a) * r }
-  })
+// Nav fly-in configuration per section
+const NAV_ENTRY_CONFIG = {
+  about: {
+    from: 'bottom',
+    // Land lower on screen, clearly below the CRT
+    target: (w, h) => ({ x: w * 0.5, y: h * 0.82 }),
+  },
+  projects: {
+    from: 'right',
+    target: (w, h) => ({ x: w * 0.73, y: h * 0.55 }),
+  },
+  now: {
+    from: 'left',
+    target: (w, h) => ({ x: w * 0.27, y: h * 0.55 }),
+  },
+  resume: {
+    from: 'top',
+    // Land high on the screen (top ~10%) since we navigate down from home
+    target: (w, h) => ({ x: w * 0.5, y: h * 0.12 }),
+  },
+  landingFrom: {
+    about: 'top',
+    projects: 'left',
+    now: 'right',
+    resume: 'bottom',
+  },
 }
 
-function spawnAsteroid(w, h) {
-  const edge = Math.floor(Math.random() * 4)
-  const m = 55
-  let x, y
-  if      (edge === 0) { x = Math.random() * w; y = -m }
-  else if (edge === 1) { x = w + m; y = Math.random() * h }
-  else if (edge === 2) { x = Math.random() * w; y = h + m }
-  else                 { x = -m; y = Math.random() * h }
-
-  const radius   = 11 + Math.random() * 10
-  const toCenter = Math.atan2(h / 2 - y, w / 2 - x)
-  const speed    = 0.14 + Math.random() * 0.24
-  return {
-    x, y,
-    vx: Math.cos(toCenter) * speed + (Math.random() - 0.5) * 0.35,
-    vy: Math.sin(toCenter) * speed + (Math.random() - 0.5) * 0.35,
-    angle: Math.random() * Math.PI * 2,
-    rotSpeed: (Math.random() - 0.5) * 0.016,
-    radius,
-    shape: makeAsteroidShape(radius),
-  }
-}
-
-// Entry config per edge: where ship spawns and where it aims
-function getEntryConfig(entryEdge, w, h, isSection) {
-  switch (entryEdge) {
-    case 'top':
-      return { sx: w / 2, sy: -60, tx: w / 2, ty: isSection ? h * 0.11 : h * 0.26, angle: Math.PI }
-    case 'left':
-      return { sx: -60, sy: h / 2, tx: isSection ? w * 0.11 : w * 0.26, ty: h / 2, angle: Math.PI / 2 }
-    case 'right':
-      return { sx: w + 60, sy: h / 2, tx: isSection ? w * 0.89 : w * 0.74, ty: h / 2, angle: -Math.PI / 2 }
-    default: // 'bottom' or null (first load)
-      return { sx: w / 2, sy: h + 60, tx: w / 2, ty: isSection ? h * 0.89 : h * 0.74, angle: 0 }
-  }
+const DIR_ANGLE = {
+  up:    0,
+  down:  Math.PI,
+  left:  -Math.PI / 2,
+  right: Math.PI / 2,
 }
 
 // --- Draw functions ---
@@ -112,23 +98,6 @@ function drawShip(ctx, x, y, angle, thrusting) {
   ctx.restore()
 }
 
-function drawAsteroid(ctx, a) {
-  ctx.save()
-  ctx.translate(a.x, a.y)
-  ctx.rotate(a.angle)
-  ctx.beginPath()
-  a.shape.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)))
-  ctx.closePath()
-  ctx.fillStyle = 'rgba(40, 60, 100, 0.4)'
-  ctx.fill()
-  ctx.strokeStyle = 'rgba(140, 175, 215, 0.72)'
-  ctx.lineWidth = 1.4
-  ctx.stroke()
-  ctx.restore()
-}
-
-const easeOutCubic = (t) => 1 - (1 - t) ** 3
-
 // Card AABB collision with slide
 function resolveCardCollision(ship, bounds) {
   if (!bounds) return
@@ -149,60 +118,183 @@ function resolveCardCollision(ship, bounds) {
 }
 
 export default function Spaceship({
-  entryEdge        = null,
-  isSection        = false,
-  returnEdge       = null,
+  wrapRef,
+  isPanningRef,
+  passableEdgesRef,
   onExitEdge,
   onFirstMove,
-  cardBoundsRef,
 }) {
-  const callbackRef    = useRef(null)
   const onExitEdgeRef  = useRef(onExitEdge)
   const onFirstMoveRef = useRef(onFirstMove)
   const canvasRef      = useRef(null)
 
-  useEffect(() => { onExitEdgeRef.current = onExitEdge },          [onExitEdge])
-  useEffect(() => { onFirstMoveRef.current = onFirstMove },         [onFirstMove])
+  useEffect(() => { onExitEdgeRef.current  = onExitEdge  }, [onExitEdge])
+  useEffect(() => { onFirstMoveRef.current = onFirstMove }, [onFirstMove])
 
   useEffect(() => {
     const canvas = canvasRef.current
     const ctx    = canvas.getContext('2d')
     let animId
 
-    const _entryEdge  = entryEdge
-    const _isSection  = isSection
-    const _returnEdge = returnEdge
-
     const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight }
     resize()
     window.addEventListener('resize', resize)
 
-    const initialDelay = _entryEdge === null ? 30 : 0
+    // Delta-time: all animations/physics use elapsed ms, normalised to 60 fps (16.667 ms/frame)
+    const MS_PER_FRAME = 1000 / 60
+    let lastFrameTime  = 0  // set on first draw call
 
-    const ship = { x: 0, y: 0, angle: 0, vx: 0, vy: 0 }
-    let entryCountdown = initialDelay
-    let entryProgress  = -1
-    let entrySX = 0, entrySY = 0, entryTX = 0, entryTY = 0
-    let hasEntered     = false
+    const ENTRY_DURATION_MS = 1200  // was 72 frames @ 60 fps
+    const ENTRY_START_X     = canvas.width + 100
+    const ENTRY_END_Y       = canvas.height * 0.65  // below center text, above bottom RESUME hint
+    const ENTRY_START_ANGLE = -Math.PI / 2  // pointing left → rotates to 0 (pointing up)
+    let entryElapsed = 0  // ms elapsed in initial entry animation
+
+    const ship = { x: ENTRY_START_X, y: ENTRY_END_Y, angle: ENTRY_START_ANGLE, vx: 0, vy: 0 }
     let firstMoveFired = false
-    let shipInvincible = 0
     let shipGone       = false
 
-    // Contrail trail buffer
+    // Nav re-entry animation state
+    const NAV_ENTRY_DURATION_MS = 1000  // was 60 frames @ 60 fps
+    let navEntryElapsed = 0
+    let navEntryActive  = false
+    let navEntryThrust  = false
+    let navStartX       = 0
+    let navStartY       = 0
+    let navEndX         = 0
+    let navEndY         = 0
+
+    // Particle-dissolve explosion state
+    const PARTICLE_COLORS = ['#7dd3fc', '#bae6fd', '#ffffff', '#fff0c0', '#fde68a']
+    let explodeParticles  = []   // array of live particles
+    let explodeActive     = false
+    let pendingNavDone    = null  // callback to fire when explosion ends
+
+    // Expose control function to App — called after each camera pan completes
+    wrapRef.current = (cmd) => {
+      if (!cmd || typeof cmd !== 'object') return
+
+      if (cmd.type === 'edge-wrap') {
+        const dx = cmd.dx ?? 0
+        const dy = cmd.dy ?? 0
+        const isCenter = dx === 0 && dy === 0
+        if (isCenter) {
+          ship.x  = canvas.width  / 2
+          ship.y  = canvas.height / 2
+          ship.vx = 0
+          ship.vy = 0
+        } else {
+          ship.x -= dx * canvas.width
+          ship.y -= dy * canvas.height
+          for (const l of lasers) {
+            l.x -= dx * canvas.width
+            l.y -= dy * canvas.height
+          }
+        }
+        trail.length   = 0
+        shipGone       = false
+        navEntryActive = false
+        navEntryThrust = false
+        explodeActive  = false
+        explodeParticles = []
+        pendingNavDone = null
+      } else if (cmd.type === 'nav-depart') {
+        // If another explosion was queued, cancel it cleanly
+        if (pendingNavDone) { pendingNavDone = null }
+
+        // Spawn particle-dissolve explosion at the ship's current position
+        const ox = ship.x
+        const oy = ship.y
+        explodeParticles = []
+        for (let i = 0; i < 36; i++) {
+          const angle   = Math.random() * Math.PI * 2
+          // two rings: fast outer sparks + slower inner sparks
+          const isOuter = i < 18
+          const speed   = isOuter ? 3.5 + Math.random() * 4.0 : 1.2 + Math.random() * 2.5
+          const decay   = isOuter ? 0.055 + Math.random() * 0.025 : 0.045 + Math.random() * 0.020
+          explodeParticles.push({
+            x: ox, y: oy,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: isOuter ? 1.5 + Math.random() * 1.5 : 2.0 + Math.random() * 2.0,
+            life: 0,
+            decay,
+            color: PARTICLE_COLORS[Math.floor(Math.random() * PARTICLE_COLORS.length)],
+          })
+        }
+        explodeActive    = true
+        navEntryActive   = false
+        navEntryThrust   = false
+        shipGone         = false  // ship hidden once explosion starts (we skip drawing it)
+        trail.length     = 0
+        pendingNavDone   = cmd.onDone ?? null
+      } else if (cmd.type === 'nav-arrive') {
+        // Prepare a fresh section-aware fly-in animation into the new section
+        const toSection   = cmd.to || 'landing'
+        const fromSection = cmd.from || 'landing'
+
+        const w = canvas.width
+        const h = canvas.height
+
+        // Determine direction and target based on destination (and origin if landing)
+        let dir
+        let target
+        if (toSection === 'landing') {
+          const map = NAV_ENTRY_CONFIG.landingFrom || {}
+          const mappedDir = map[fromSection]
+          dir = mappedDir || 'right'
+          target = (NAV_ENTRY_CONFIG.about?.target || ((w2, h2) => ({ x: w2 * 0.5, y: h2 * 0.65 })))(w, h)
+        } else {
+          const cfg = NAV_ENTRY_CONFIG[toSection]
+          dir = cfg?.from || 'right'
+          const fallbackTarget = (w2, h2) => ({ x: w2 * 0.5, y: h2 * 0.65 })
+          target = (cfg?.target || fallbackTarget)(w, h)
+        }
+
+        if (dir === 'bottom') {
+          navStartX = target.x
+          navStartY = h + 40
+        } else if (dir === 'top') {
+          navStartX = target.x
+          navStartY = -40
+        } else if (dir === 'left') {
+          navStartX = -40
+          navStartY = target.y
+        } else { // 'right' default
+          navStartX = w + 40
+          navStartY = target.y
+        }
+
+        navEndX         = target.x
+        navEndY         = target.y
+        navEntryElapsed = 0
+        navEntryActive  = true
+        navEntryThrust  = true
+
+        const angle =
+          dir === 'bottom' ? DIR_ANGLE.up :
+          dir === 'top'    ? DIR_ANGLE.down :
+          dir === 'left'   ? DIR_ANGLE.right :
+                             DIR_ANGLE.left
+
+        ship.x  = navStartX
+        ship.y  = navStartY
+        ship.vx = 0
+        ship.vy = 0
+        ship.angle = angle
+
+        shipGone = false
+        trail.length = 0
+      }
+    }
+
     const trail = []
 
-    // Focus indicator
-    let lastInputTime   = Date.now()
-    let focusOpacity    = 0
+    let lastInputTime = Date.now()
+    let focusOpacity  = 0
 
-    const maxAsteroids = _isSection ? 0 : 8
-    const lasers       = []
-    const asteroids    = Array.from({ length: maxAsteroids }, () =>
-      spawnAsteroid(canvas.width, canvas.height)
-    )
-    const particles    = []
-    const respawnQueue = []
-    let laserCooldown  = 0
+    const lasers      = []
+    let laserCooldown = 0
 
     const keys = {}
     const onKeyDown = (e) => { keys[e.code] = true; if (e.code === 'Space') e.preventDefault() }
@@ -210,101 +302,94 @@ export default function Spaceship({
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup',   onKeyUp)
 
-    function explode(x, y, radius) {
-      const count = 7 + Math.floor(radius / 5)
-      for (let i = 0; i < count; i++) {
-        const ang   = (i / count) * Math.PI * 2 + Math.random() * 0.9
-        const speed = radius * 0.08 + Math.random() * 2.2
-        particles.push({
-          x, y,
-          vx: Math.cos(ang) * speed,
-          vy: Math.sin(ang) * speed,
-          life: 1.0,
-          decay: 0.024 + Math.random() * 0.018,
-          r: 1.2 + Math.random() * 2.2,
-        })
-      }
-    }
-
-    function destroyAsteroid(idx) {
-      const a = asteroids[idx]
-      explode(a.x, a.y, a.radius)
-      asteroids.splice(idx, 1)
-      callbackRef.current?.()
-      respawnQueue.push(60)
-    }
-
     const draw = (t = 0) => {
+      // --- Delta-time (capped at 50 ms to avoid huge jumps after tab focus) ---
+      const dt       = lastFrameTime === 0 ? MS_PER_FRAME : Math.min(t - lastFrameTime, 50)
+      lastFrameTime  = t
+      const dtScale  = dt / MS_PER_FRAME  // 1.0 at 60 fps, 0.5 at 120 fps, etc.
+
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       const w = canvas.width
       const h = canvas.height
 
-      // --- Respawn queue ---
-      if (!shipGone) {
-        for (let i = respawnQueue.length - 1; i >= 0; i--) {
-          respawnQueue[i]--
-          if (respawnQueue[i] <= 0) {
-            respawnQueue.splice(i, 1)
-            if (asteroids.length < maxAsteroids) asteroids.push(spawnAsteroid(w, h))
-          }
-        }
-      }
-
-      // --- Asteroids ---
-      for (const a of asteroids) {
-        a.x += a.vx;  a.y += a.vy;  a.angle += a.rotSpeed
-        if (a.x < -a.radius - 30) a.x = w + a.radius
-        if (a.x > w + a.radius + 30) a.x = -a.radius
-        if (a.y < -a.radius - 30) a.y = h + a.radius
-        if (a.y > h + a.radius + 30) a.y = -a.radius
-        drawAsteroid(ctx, a)
-      }
-
-      // --- Particles ---
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i]
-        p.x += p.vx;  p.y += p.vy;  p.life -= p.decay
-        if (p.life <= 0) { particles.splice(i, 1); continue }
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2)
-        const g = (150 + ((1 - p.life) * 60)) | 0
-        ctx.fillStyle = `rgba(255, ${g}, 55, ${p.life})`
-        ctx.fill()
-      }
-
       if (shipGone) { animId = requestAnimationFrame(draw); return }
 
-      // --- Entry animation ---
-      if (!hasEntered) {
-        if (entryCountdown > 0) { entryCountdown--; animId = requestAnimationFrame(draw); return }
-
-        if (entryProgress === -1) {
-          entryProgress = 0
-          trail.length = 0   // clear trail on entry
-          const cfg = getEntryConfig(_entryEdge, w, h, _isSection)
-          ship.x = cfg.sx;  ship.y = cfg.sy;  ship.angle = cfg.angle
-          ship.vx = 0;  ship.vy = 0
-          entrySX = cfg.sx;  entrySY = cfg.sy;  entryTX = cfg.tx;  entryTY = cfg.ty
+      // --- Particle-dissolve explosion ---
+      if (explodeActive) {
+        // Central flash: bright white circle, fades over first ~80 ms
+        const firstParticle = explodeParticles[0]
+        if (firstParticle) {
+          const flashAlpha = Math.max(0, 1 - firstParticle.life * 5)
+          if (flashAlpha > 0) {
+            ctx.beginPath()
+            ctx.arc(firstParticle.x, firstParticle.y, 18, 0, Math.PI * 2)
+            ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha * 0.85})`
+            ctx.fill()
+          }
         }
 
-        entryProgress++
-        const t2   = Math.min(entryProgress / ENTRY_FRAMES, 1)
-        const ease = easeOutCubic(t2)
-        ship.x = entrySX + ease * (entryTX - entrySX)
-        ship.y = entrySY + ease * (entryTY - entrySY)
+        let allDead = true
+        for (const p of explodeParticles) {
+          p.life += p.decay * dtScale   // dt-scaled: same total lifetime on any monitor
+          p.x    += p.vx * dtScale
+          p.y    += p.vy * dtScale
+          if (p.life < 1) {
+            allDead = false
+            const alpha = 1 - p.life
+            ctx.beginPath()
+            ctx.arc(p.x, p.y, p.size * (1 - p.life * 0.5), 0, Math.PI * 2)
+            ctx.fillStyle = p.color
+            ctx.globalAlpha = alpha
+            ctx.fill()
+            ctx.globalAlpha = 1
+          }
+        }
 
-        // Export position even during entry
+        if (allDead) {
+          explodeActive    = false
+          explodeParticles = []
+          shipGone         = true
+          const cb = pendingNavDone
+          pendingNavDone   = null
+          cb?.()  // tell App to start the scroll now
+        }
+
+        animId = requestAnimationFrame(draw)
+        return
+      }
+
+      // --- Initial landing entry animation ---
+      if (entryElapsed < ENTRY_DURATION_MS) {
+        entryElapsed   = Math.min(entryElapsed + dt, ENTRY_DURATION_MS)
+        const t2       = entryElapsed / ENTRY_DURATION_MS
+        const ease     = 1 - Math.pow(1 - t2, 3)  // easeOutCubic
+        ship.x         = ENTRY_START_X + (w / 2 - ENTRY_START_X) * ease
+        ship.y         = ENTRY_END_Y
+        ship.angle     = ENTRY_START_ANGLE * (1 - ease)
+        ship.vx        = 0
+        ship.vy        = 0
+        drawShip(ctx, ship.x, ship.y, ship.angle, false)
+        animId = requestAnimationFrame(draw)
+        return
+      }
+
+      // --- Nav re-entry animation ---
+      if (navEntryActive && navEntryElapsed < NAV_ENTRY_DURATION_MS) {
+        navEntryElapsed = Math.min(navEntryElapsed + dt, NAV_ENTRY_DURATION_MS)
+        const t2        = navEntryElapsed / NAV_ENTRY_DURATION_MS
+        const ease      = 1 - Math.pow(1 - t2, 3)  // easeOutCubic
+        ship.x  = navStartX + (navEndX - navStartX) * ease
+        ship.y  = navStartY + (navEndY - navStartY) * ease
+        ship.vx = 0
+        ship.vy = 0
+
+        if (navEntryElapsed >= NAV_ENTRY_DURATION_MS) {
+          navEntryActive = false
+          navEntryThrust = false
+        }
+
         shipPosition.current = { x: ship.x, y: ship.y }
-
-        drawShip(ctx, ship.x, ship.y, ship.angle, true)
-
-        if (entryProgress >= ENTRY_FRAMES) {
-          hasEntered = true
-          ship.x = entryTX;  ship.y = entryTY
-          ship.vx = 0;  ship.vy = 0
-          lastInputTime = Date.now()  // reset focus timer after entry
-        }
-
+        drawShip(ctx, ship.x, ship.y, ship.angle, navEntryThrust)
         animId = requestAnimationFrame(draw)
         return
       }
@@ -320,30 +405,24 @@ export default function Spaceship({
           ship.vy = 0
           shipPosition.current = { x: ship.x, y: ship.y }
 
-          // Draw contrail while docked (empty since no movement)
-          // Draw ship at docked position
-          const showShip = shipInvincible === 0 || Math.floor(shipInvincible / 4) % 2 === 0
-          if (showShip) drawShip(ctx, ship.x, ship.y, ship.angle, false)
+          drawShip(ctx, ship.x, ship.y, ship.angle, false)
 
           animId = requestAnimationFrame(draw)
           return
         }
-        // satBound not found — fall through to normal physics
       }
 
       // --- Normal gameplay ---
-      if (shipInvincible > 0) shipInvincible--
-
       const anyInput = keys['ArrowLeft'] || keys['ArrowRight'] || keys['ArrowUp']
 
       if (!shipControlDisabled.current) {
-        if (keys['ArrowLeft'])  ship.angle -= TURN_SPEED
-        if (keys['ArrowRight']) ship.angle += TURN_SPEED
+        if (keys['ArrowLeft'])  ship.angle -= TURN_SPEED * dtScale
+        if (keys['ArrowRight']) ship.angle += TURN_SPEED * dtScale
 
         const thrusting = !!keys['ArrowUp']
         if (thrusting) {
-          ship.vx += Math.sin(ship.angle) * THRUST
-          ship.vy -= Math.cos(ship.angle) * THRUST
+          ship.vx += Math.sin(ship.angle) * THRUST * dtScale
+          ship.vy -= Math.cos(ship.angle) * THRUST * dtScale
           const spd = Math.hypot(ship.vx, ship.vy)
           if (spd > MAX_SPEED) { ship.vx *= MAX_SPEED / spd; ship.vy *= MAX_SPEED / spd }
         }
@@ -351,42 +430,41 @@ export default function Spaceship({
 
       const thrusting = !!keys['ArrowUp'] && !shipControlDisabled.current
 
-      ship.vx *= DRAG;  ship.vy *= DRAG
-      ship.x  += ship.vx;  ship.y  += ship.vy
+      // Drag: Math.pow(DRAG, dtScale) gives the same per-second decay on any refresh rate
+      const dragFactor = Math.pow(DRAG, dtScale)
+      ship.vx *= dragFactor;  ship.vy *= dragFactor
+      ship.x  += ship.vx * dtScale;  ship.y  += ship.vy * dtScale
 
-      // Track last input time for focus indicator
       if (anyInput) lastInputTime = Date.now()
 
-      // Fire onFirstMove on the first key input
       if (!firstMoveFired && anyInput) {
         firstMoveFired = true
         onFirstMoveRef.current?.()
       }
 
-      // Export position to store (read by Projects satellites)
       shipPosition.current = { x: ship.x, y: ship.y }
 
-      // --- Edge detection ---
-      if (_isSection) {
-        if ('top'    !== _returnEdge && ship.y < WALL_INSET)   { ship.y = WALL_INSET;   if (ship.vy < 0) ship.vy = 0 }
-        if ('bottom' !== _returnEdge && ship.y > h-WALL_INSET) { ship.y = h-WALL_INSET; if (ship.vy > 0) ship.vy = 0 }
-        if ('left'   !== _returnEdge && ship.x < WALL_INSET)   { ship.x = WALL_INSET;   if (ship.vx < 0) ship.vx = 0 }
-        if ('right'  !== _returnEdge && ship.x > w-WALL_INSET) { ship.x = w-WALL_INSET; if (ship.vx > 0) ship.vx = 0 }
+      // --- Dead-end wall clamping (edges with no destination) ---
+      const passable = passableEdgesRef?.current
+      if (passable && !isPanningRef?.current) {
+        if (!passable.has('top')    && ship.y < WALL_INSET)   { ship.y = WALL_INSET;   if (ship.vy < 0) ship.vy = 0 }
+        if (!passable.has('bottom') && ship.y > h-WALL_INSET) { ship.y = h-WALL_INSET; if (ship.vy > 0) ship.vy = 0 }
+        if (!passable.has('left')   && ship.x < WALL_INSET)   { ship.x = WALL_INSET;   if (ship.vx < 0) ship.vx = 0 }
+        if (!passable.has('right')  && ship.x > w-WALL_INSET) { ship.x = w-WALL_INSET; if (ship.vx > 0) ship.vx = 0 }
       }
-      if (!shipGone) {
-        if (ship.y < -EDGE_MARGIN  && (!_isSection || _returnEdge === 'top'))    { shipGone = true; onExitEdgeRef.current?.('top') }
-        if (ship.y > h+EDGE_MARGIN && (!_isSection || _returnEdge === 'bottom')) { shipGone = true; onExitEdgeRef.current?.('bottom') }
-        if (ship.x < -EDGE_MARGIN  && (!_isSection || _returnEdge === 'left'))   { shipGone = true; onExitEdgeRef.current?.('left') }
-        if (ship.x > w+EDGE_MARGIN && (!_isSection || _returnEdge === 'right'))  { shipGone = true; onExitEdgeRef.current?.('right') }
+
+      // --- Edge detection (only when not panning) ---
+      if (!shipGone && !isPanningRef?.current) {
+        if (ship.y < -EDGE_MARGIN  && passable?.has('top'))    { shipGone = true; onExitEdgeRef.current?.('top') }
+        if (ship.y > h+EDGE_MARGIN && passable?.has('bottom')) { shipGone = true; onExitEdgeRef.current?.('bottom') }
+        if (ship.x < -EDGE_MARGIN  && passable?.has('left'))   { shipGone = true; onExitEdgeRef.current?.('left') }
+        if (ship.x > w+EDGE_MARGIN && passable?.has('right'))  { shipGone = true; onExitEdgeRef.current?.('right') }
       }
 
       if (shipGone) { trail.length = 0; animId = requestAnimationFrame(draw); return }
 
-      // --- Card collision (section screens only) ---
-      resolveCardCollision(ship, cardBoundsRef?.current)
-
       // --- Monitor collision (About page) ---
-      if (monitorBounds.current) {
+      if (monitorBounds.current && activeSection.current === 'about') {
         resolveCardCollision(ship, monitorBounds.current)
       }
 
@@ -413,7 +491,7 @@ export default function Spaceship({
       }
 
       // --- Lasers ---
-      if (laserCooldown > 0) laserCooldown--
+      if (laserCooldown > 0) laserCooldown -= dtScale
       if (keys['Space'] && laserCooldown <= 0) {
         const noseX = ship.x + Math.sin(ship.angle) * 10
         const noseY = ship.y - Math.cos(ship.angle) * 10
@@ -428,22 +506,12 @@ export default function Spaceship({
 
       for (let i = lasers.length - 1; i >= 0; i--) {
         const l = lasers[i]
-        l.x += l.vx;  l.y += l.vy;  l.life -= LASER_DECAY
+        l.x += l.vx * dtScale;  l.y += l.vy * dtScale;  l.life -= LASER_DECAY * dtScale
         if (l.life <= 0) { lasers.splice(i, 1); continue }
 
         let hit = false
 
-        // Check asteroid hits
-        for (let j = asteroids.length - 1; j >= 0; j--) {
-          if (Math.hypot(l.x - asteroids[j].x, l.y - asteroids[j].y) < asteroids[j].radius + 4) {
-            destroyAsteroid(j)
-            lasers.splice(i, 1)
-            hit = true
-            break
-          }
-        }
-
-        // Check polaroid hits (About page) — read from shared store
+        // Check polaroid hits (About page)
         if (!hit && polaroidBounds.current.length > 0) {
           const bounds = polaroidBounds.current
           for (let p = 0; p < bounds.length; p++) {
@@ -457,7 +525,7 @@ export default function Spaceship({
           }
         }
 
-        // Check satellite hits (Projects page) — circle collision
+        // Check satellite hits (Projects page)
         if (!hit && satelliteBounds.current.length > 0) {
           const satBounds = satelliteBounds.current
           for (let s = 0; s < satBounds.length; s++) {
@@ -471,7 +539,7 @@ export default function Spaceship({
           }
         }
 
-        // Check Now icon hits (Now page) — circle collision
+        // Check Now icon hits
         if (!hit && nowIconBounds.current.length > 0) {
           for (const ib of nowIconBounds.current) {
             if (Math.hypot(l.x - ib.cx, l.y - ib.cy) < ib.r + 4) {
@@ -494,17 +562,6 @@ export default function Spaceship({
         ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(l.x, l.y)
         ctx.strokeStyle = `rgba(255, 215, 230, ${l.life})`
         ctx.lineWidth = 1.2; ctx.stroke()
-      }
-
-      // --- Ship–asteroid collision ---
-      if (shipInvincible === 0) {
-        for (let j = asteroids.length - 1; j >= 0; j--) {
-          if (Math.hypot(ship.x - asteroids[j].x, ship.y - asteroids[j].y) < SHIP_RADIUS + asteroids[j].radius) {
-            destroyAsteroid(j)
-            shipInvincible = INVINCIBLE_T
-            break
-          }
-        }
       }
 
       // --- Contrail trail ---
@@ -539,14 +596,12 @@ export default function Spaceship({
         ctx.save()
         ctx.translate(ship.x, ship.y)
 
-        // Outer ring
         ctx.beginPath()
         ctx.arc(0, 0, ringR, 0, Math.PI * 2)
         ctx.strokeStyle = `rgba(125, 211, 252, ${alpha})`
         ctx.lineWidth = 1.5
         ctx.stroke()
 
-        // Four inward-pointing chevrons at N/S/E/W
         const chevronSize = 4
         const chevronDist = ringR + 7
         const dirs = [
@@ -573,8 +628,7 @@ export default function Spaceship({
       }
 
       // --- Draw ship ---
-      const showShip = shipInvincible === 0 || Math.floor(shipInvincible / 4) % 2 === 0
-      if (showShip) drawShip(ctx, ship.x, ship.y, ship.angle, thrusting)
+      drawShip(ctx, ship.x, ship.y, ship.angle, thrusting)
 
       animId = requestAnimationFrame(draw)
     }
@@ -582,6 +636,7 @@ export default function Spaceship({
     draw()
 
     return () => {
+      wrapRef.current = null
       cancelAnimationFrame(animId)
       window.removeEventListener('resize', resize)
       window.removeEventListener('keydown', onKeyDown)

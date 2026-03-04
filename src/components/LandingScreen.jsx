@@ -1,7 +1,12 @@
+import { useState, useEffect, useRef } from 'react'
+
 const IS_TOUCH = typeof window !== 'undefined' && window.matchMedia('(hover: none)').matches
 
 const HINT_COLOR  = 'rgba(125, 211, 252, 0.88)'
 const ARROW_COLOR = 'rgba(125, 211, 252, 0.82)'
+
+const FULL_TITLE = 'ZACHARY DEXTER'
+const FULL_SUB   = 'SOFTWARE DEVELOPER'
 
 const EDGE_HINTS = [
   { dir: 'top',    arrow: '↑', label: 'ABOUT',    style: { top: '7%',    left: '50%', transform: 'translateX(-50%)', flexDirection: 'column',         alignItems: 'center' } },
@@ -11,12 +16,44 @@ const EDGE_HINTS = [
 ]
 
 export default function LandingScreen({ hasMovedShip }) {
+  const [title, setTitle]           = useState('')
+  const [sub, setSub]               = useState('')
+  const [hintsVisible, setHints]    = useState(false)
+
+  useEffect(() => {
+    let i = 0
+    const t1 = setInterval(() => {
+      i++
+      setTitle(FULL_TITLE.slice(0, i))
+      if (i === FULL_TITLE.length) clearInterval(t1)
+    }, 55)
+
+    let subInterval
+    const t2 = setTimeout(() => {
+      let j = 0
+      subInterval = setInterval(() => {
+        j++
+        setSub(FULL_SUB.slice(0, j))
+        if (j === FULL_SUB.length) clearInterval(subInterval)
+      }, 35)
+    }, 200)
+
+    const t3 = setTimeout(() => setHints(true), 1300)
+
+    return () => {
+      clearInterval(t1)
+      clearTimeout(t2)
+      clearInterval(subInterval)
+      clearTimeout(t3)
+    }
+  }, [])
+
   return (
     <>
       {/* Name + subtitle — centered */}
       <div
         style={{
-          position: 'fixed', inset: 0, zIndex: 1, pointerEvents: 'none',
+          position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           userSelect: 'none',
         }}
@@ -31,9 +68,10 @@ export default function LandingScreen({ hasMovedShip }) {
             textTransform: 'uppercase',
             opacity: 0.95,
             textShadow: '0 0 30px rgba(125,211,252,0.30)',
+            minHeight: '1em',
           }}
         >
-          ZACHARY DEXTER
+          {title}
         </div>
 
         <div
@@ -44,13 +82,14 @@ export default function LandingScreen({ hasMovedShip }) {
             color: 'rgba(125, 211, 252, 0.82)',
             marginTop: '10px',
             textTransform: 'uppercase',
+            minHeight: '1em',
           }}
         >
-          SOFTWARE DEVELOPER
+          {sub}
         </div>
 
-        {/* Controls hint — pulse until ship first moves, hidden on mobile */}
-        {!IS_TOUCH && (
+        {/* Controls hint — pulse until ship first moves, hidden on mobile, delayed on load */}
+        {!IS_TOUCH && hintsVisible && (
           <div
             className={hasMovedShip ? 'ctrl-hint--passive' : 'ctrl-hint--active'}
             style={{
@@ -65,12 +104,12 @@ export default function LandingScreen({ hasMovedShip }) {
         )}
       </div>
 
-      {/* Edge directional hints — desktop only (EdgeBeacons handles mobile) */}
-      {!IS_TOUCH && EDGE_HINTS.map(({ dir, arrow, label, style }) => (
+      {/* Edge directional hints — desktop only, delayed on load */}
+      {!IS_TOUCH && hintsVisible && EDGE_HINTS.map(({ dir, arrow, label, style }) => (
         <div
           key={dir}
           style={{
-            position: 'fixed', zIndex: 1, pointerEvents: 'none',
+            position: 'absolute', zIndex: 1, pointerEvents: 'none',
             display: 'flex', gap: '7px',
             ...style,
           }}

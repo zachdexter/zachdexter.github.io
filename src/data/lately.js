@@ -5,21 +5,25 @@
 export const LATELY_DATA = {
   cassette: {
     // Spotify placeholder — will be wired to API later
-    track:  'Track Title',
-    artist: 'Artist Name',
-    album:  'Album Name',
+    track:       'Track Title',
+    artist:      'Artist Name',
+    album:       'Album Name',
+    image:       null,  // e.g. '/assets/lately/music.jpg'
+    description: '',
   },
   tv: {
-    title:  'Severance',
-    type:   'TV Show',
-    status: 'Currently Watching',
-    image:  null,  // e.g. '/assets/lately/tv.jpg'
+    title:       'Severance',
+    type:        'TV Show',
+    status:      'Currently Watching',
+    image:       null,  // e.g. '/assets/lately/tv.jpg'
+    description: '',
   },
   book: {
-    title:  'The Pragmatic Programmer',
-    author: 'Andrew Hunt & David Thomas',
-    status: 'Currently Reading',
-    image:  null,  // e.g. '/assets/lately/book.jpg'
+    title:       'The Pragmatic Programmer',
+    author:      'Andrew Hunt & David Thomas',
+    progress:    35,   // percentage 0–100
+    image:       null,  // e.g. '/assets/lately/book.jpg'
+    description: '',
   },
   photos: [
     { src: null, caption: 'coming soon' },
@@ -28,9 +32,10 @@ export const LATELY_DATA = {
     { src: null, caption: 'coming soon' },
   ],
   game: {
-    title:    'Stardew Valley',
-    platform: 'PC',
-    status:   'Currently Playing',
-    image:    null,  // e.g. '/assets/lately/game.jpg'
+    title:       'Stardew Valley',
+    platform:    'PC',
+    status:      'Currently Playing',
+    image:       null,  // e.g. '/assets/lately/game.jpg'
+    description: '',
   },
 }

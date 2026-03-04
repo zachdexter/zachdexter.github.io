@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { shipPosition, satelliteBounds, satelliteHitHandler, dockingState } from '../store'
+import { shipPosition, satelliteBounds, satelliteHitHandler, dockingState, activeSection, monitorBounds } from '../store'
 
 // ─── Project data ─────────────────────────────────────────────────────────────
 const PROJECTS = [
@@ -130,7 +130,7 @@ const SATELLITE_CONFIGS = [
   },
 ]
 
-const DOCK_THRESHOLD   = 52    // px from satellite center — just before visual collision
+const DOCK_THRESHOLD   = 52    // px from satellite center
 const UNDOCK_COOLDOWN  = 3000  // ms before ship can re-dock after closing a card
 
 // ─── Canvas drawing helpers ───────────────────────────────────────────────────
@@ -371,6 +371,14 @@ function SatelliteCanvas({ onSatelliteClick, selectedIdRef, cardRef, lastUndockT
       lastT = t
 
       ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      // Gate: only show/interact when this section is active
+      if (activeSection.current !== 'projects') {
+        satelliteBounds.current = []
+        animId = requestAnimationFrame(draw)
+        return
+      }
+
       const vscale = getVScale()
       const cx = canvas.width * 0.40
       const cy = canvas.height * 0.50
@@ -412,7 +420,6 @@ function SatelliteCanvas({ onSatelliteClick, selectedIdRef, cardRef, lastUndockT
         const dist = Math.hypot(ship.x - sx, ship.y - sy)
         const highlighted = dist < 150
 
-        // Docking detection — only trigger when not already docked and past cooldown
         if (!dockingState.current
             && dist < sat.bodyW * sat.scale * 0.5 + DOCK_THRESHOLD
             && Date.now() - lastUndockTimeRef.current > UNDOCK_COOLDOWN) {
@@ -473,7 +480,7 @@ function SatelliteCanvas({ onSatelliteClick, selectedIdRef, cardRef, lastUndockT
     <canvas
       ref={canvasRef}
       style={{
-        position: 'fixed',
+        position: 'absolute',
         inset: 0,
         zIndex: 5,
         cursor: 'crosshair',
@@ -512,7 +519,6 @@ function ProjectOverlay({ project, cfg, onClose, cardRef }) {
         onClick={e => e.stopPropagation()}
         style={{
           position: 'fixed',
-          // Default center — will be overridden by rAF loop when docked, or by click handler
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
@@ -527,7 +533,6 @@ function ProjectOverlay({ project, cfg, onClose, cardRef }) {
           zIndex: 9001,
         }}
       >
-        {/* Header */}
         <div style={{ marginBottom: '20px' }}>
           <p style={{ fontFamily: 'var(--font-display)', fontSize: '8px', letterSpacing: '2.5px', color: CD, textTransform: 'uppercase', marginBottom: '6px' }}>
             ◈ SATELLITE — {cfg.name.toUpperCase()}
@@ -632,8 +637,27 @@ export default function Projects() {
   const cardRef = useRef(null)
   const lastUndockTimeRef = useRef(0)
 
-  // Keep ref in sync with state
   useEffect(() => { selectedIdRef.current = selectedId }, [selectedId])
+
+  // Clear monitorBounds when Projects section is active (no monitor on this page)
+  useEffect(() => {
+    if (activeSection.current === 'projects') {
+      monitorBounds.current = null
+    }
+  }, []) // Run once on mount
+
+  // Also clear when section changes to projects
+  useEffect(() => {
+    const check = () => {
+      if (activeSection.current === 'projects') {
+        monitorBounds.current = null
+      }
+    }
+    // Check immediately and on section changes
+    check()
+    const interval = setInterval(check, 100) // Check periodically as fallback
+    return () => clearInterval(interval)
+  }, [])
 
   const handleSatelliteClick = useCallback((id) => {
     setSelectedId(id)
@@ -648,7 +672,7 @@ export default function Projects() {
   const selectedProject = selectedId ? PROJECTS.find(p => p.id === selectedId) : null
   const selectedCfg     = selectedId ? SATELLITE_CONFIGS.find(c => c.id === selectedId) : null
 
-  return createPortal(
+  return (
     <>
       <SatelliteCanvas
         onSatelliteClick={handleSatelliteClick}
@@ -659,7 +683,7 @@ export default function Projects() {
 
       {/* Header hint */}
       <div style={{
-        position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)',
+        position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
         zIndex: 8, fontFamily: 'var(--font-display)', fontSize: '8px',
         letterSpacing: '2.5px', color: 'rgba(125,211,252,0.30)',
         textTransform: 'uppercase', pointerEvents: 'none', userSelect: 'none',
@@ -675,7 +699,6 @@ export default function Projects() {
           cardRef={cardRef}
         />
       )}
-    </>,
-    document.body
+    </>
   )
 }

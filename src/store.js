@@ -39,3 +39,7 @@ export const nowIconHitHandler = { current: null }
 // Monitor bounding box — written by About.jsx CRTMonitor, cleared on unmount
 // { x: number, y: number, w: number, h: number } in viewport coords
 export const monitorBounds = { current: null }
+
+// Active section — written by App.jsx immediately when a pan starts/ends
+// Sections gate their rAF loops with this to avoid stale bounds / ghost interactions
+export const activeSection = { current: 'landing' }

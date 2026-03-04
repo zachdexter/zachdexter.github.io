@@ -51,7 +51,7 @@ const BEACONS = [
   },
 ]
 
-export default function EdgeBeacons({ screen, onNavigate, asteroidScore }) {
+export default function EdgeBeacons({ screen, onNavigate }) {
   const [hovered, setHovered] = useState(null)
   const leaveTimerRef = useRef(null)
   const isLanding = screen === 'landing'
@@ -73,19 +73,6 @@ export default function EdgeBeacons({ screen, onNavigate, asteroidScore }) {
 
   return (
     <>
-      {/* Asteroid score — top left */}
-      {asteroidScore > 0 && (
-        <div
-          style={{
-            position: 'fixed', top: '18px', left: '22px', zIndex: 15,
-            fontFamily: 'var(--font-display)', fontSize: '11px', letterSpacing: '2px',
-            color: 'rgba(125, 211, 252, 0.90)', userSelect: 'none', pointerEvents: 'none',
-          }}
-        >
-          ⬡ {asteroidScore}
-        </div>
-      )}
-
       {BEACONS.map((beacon) => {
         const isCurrentSection = !isLanding && screen === EDGE_TO_SECTION[beacon.edge]
         const isReturnEdge     = !isLanding && RETURN_EDGE[screen] === beacon.edge

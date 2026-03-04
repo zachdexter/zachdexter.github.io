@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { polaroidBounds, polaroidHitHandler, shipControlDisabled, monitorBounds } from '../store'
+import { polaroidBounds, polaroidHitHandler, shipControlDisabled, monitorBounds, activeSection } from '../store'
 
 // ── EDIT PHOTO DATES HERE ──────────────────────────────────────────
 const PHOTO_DATE_OVERRIDES = {
@@ -36,7 +36,6 @@ const PHOTO_POOL = [
 
 const SLOT_COUNT = 7
 
-// CRT monitor content — typed out character by character on entry
 const CONTENT_LINES = [
   { type: 'text', value: '> DEXTER, ZACHARY' },
   { type: 'text', value: "  GWU CS '27" },
@@ -84,12 +83,12 @@ function getRegionBounds(region, mb) {
   if (region === 'right') {
     return { xMin: mb.x + mb.w + G, xMax: vw - M - pw, yMin: M, yMax: vh - M - ph }
   }
-  // bottom
   return { xMin: M, xMax: vw - M - pw, yMin: mb.y + mb.h + G, yMax: vh - M - ph }
 }
 
-function findNonOverlappingBase(region, mb, existingParams) {
+function findNonOverlappingBase(region, mb, existingParams, exclusionZones) {
   const vw = window.innerWidth, vh = window.innerHeight
+  const margin = REGION_MARGIN
   let bounds = getRegionBounds(region, mb)
   if (bounds.xMax - bounds.xMin <= 0 || bounds.yMax - bounds.yMin <= 0) {
     region = 'bottom'
@@ -113,14 +112,23 @@ function findNonOverlappingBase(region, mb, existingParams) {
       if (dx < bufX && dy < bufY) { overlaps = true }
       minDist = Math.min(minDist, Math.sqrt(dx * dx + dy * dy))
     }
+    for (const ez of (exclusionZones || [])) {
+      if (cx + POLAROID_W > ez.x && cx < ez.x + ez.w &&
+          cy + POLAROID_H > ez.y && cy < ez.y + ez.h) {
+        overlaps = true
+      }
+    }
     if (!overlaps) {
-      // Build params with this position
+      const baseX = Math.max(margin, Math.min(vw - POLAROID_W - margin, cx))
+      const baseY = Math.max(margin, Math.min(vh - POLAROID_H - margin, cy))
+      const maxAmpX = Math.max(0, Math.min(baseX - margin, vw - margin - POLAROID_W - baseX, Math.min(28, rw / 4)))
+      const maxAmpY = Math.max(0, Math.min(baseY - margin, vh - margin - POLAROID_H - baseY, Math.min(22, rh / 4)))
       return {
         region,
-        baseX: Math.max(REGION_MARGIN, Math.min(vw - POLAROID_W - REGION_MARGIN, cx)),
-        baseY: Math.max(REGION_MARGIN, Math.min(vh - POLAROID_H - REGION_MARGIN, cy)),
-        ampX:  Math.min(28, rw / 4) * (0.5 + Math.random() * 0.5),
-        ampY:  Math.min(22, rh / 4) * (0.5 + Math.random() * 0.5),
+        baseX,
+        baseY,
+        ampX:  maxAmpX * (0.5 + Math.random() * 0.5),
+        ampY:  maxAmpY * (0.5 + Math.random() * 0.5),
         freqX: 0.00018 + Math.random() * 0.00012,
         freqY: 0.00014 + Math.random() * 0.00010,
         phaseX: Math.random() * Math.PI * 2,
@@ -134,14 +142,17 @@ function findNonOverlappingBase(region, mb, existingParams) {
     }
   }
 
-  // No non-overlapping found — use best candidate
   const { cx, cy } = bestCandidate || { cx: bounds.xMin + rw / 2, cy: bounds.yMin + rh / 2 }
+  const baseX = Math.max(margin, Math.min(vw - POLAROID_W - margin, cx))
+  const baseY = Math.max(margin, Math.min(vh - POLAROID_H - margin, cy))
+  const maxAmpX = Math.max(0, Math.min(baseX - margin, vw - margin - POLAROID_W - baseX, Math.min(28, rw / 4)))
+  const maxAmpY = Math.max(0, Math.min(baseY - margin, vh - margin - POLAROID_H - baseY, Math.min(22, rh / 4)))
   return {
     region,
-    baseX: Math.max(REGION_MARGIN, Math.min(vw - POLAROID_W - REGION_MARGIN, cx)),
-    baseY: Math.max(REGION_MARGIN, Math.min(vh - POLAROID_H - REGION_MARGIN, cy)),
-    ampX:  Math.min(28, rw / 4) * (0.5 + Math.random() * 0.5),
-    ampY:  Math.min(22, rh / 4) * (0.5 + Math.random() * 0.5),
+    baseX,
+    baseY,
+    ampX:  maxAmpX * (0.5 + Math.random() * 0.5),
+    ampY:  maxAmpY * (0.5 + Math.random() * 0.5),
     freqX: 0.00018 + Math.random() * 0.00012,
     freqY: 0.00014 + Math.random() * 0.00010,
     phaseX: Math.random() * Math.PI * 2,
@@ -162,12 +173,11 @@ function formatExifDate(d) {
 }
 
 // ─── CRT Monitor ─────────────────────────────────────────────────────────────
-function CRTMonitor({ monitorRef }) {
-  // typedState: array of { line, charsSoFar, isComplete }
+function CRTMonitor({ monitorRef, isActive }) {
   const [typedState, setTypedState] = useState([])
-  const intervalRef = useRef(null)
-  const lineIdxRef  = useRef(0)
-  const charIdxRef  = useRef(0)
+  const intervalRef        = useRef(null)
+  const lineIdxRef         = useRef(0)
+  const charIdxRef         = useRef(0)
 
   // Write monitor bounds to store for ship collision
   useEffect(() => {
@@ -188,8 +198,18 @@ function CRTMonitor({ monitorRef }) {
     }
   }, [monitorRef])
 
+  // Refresh bounds when section becomes active (bounds were stale if rendered off-screen)
   useEffect(() => {
-    // Start typing
+    if (!isActive || !monitorRef.current) return
+    const r = monitorRef.current.getBoundingClientRect()
+    monitorBounds.current = { x: r.left, y: r.top, w: r.width, h: r.height }
+  }, [isActive, monitorRef])
+
+  // Resume/start typing whenever section is active; pause when inactive
+  useEffect(() => {
+    if (!isActive) return
+    if (lineIdxRef.current >= CONTENT_LINES.length) return  // already finished
+
     intervalRef.current = setInterval(() => {
       const lineIdx = lineIdxRef.current
       if (lineIdx >= CONTENT_LINES.length) {
@@ -200,7 +220,6 @@ function CRTMonitor({ monitorRef }) {
       const line = CONTENT_LINES[lineIdx]
 
       if (line.type === 'blank') {
-        // Blank lines complete instantly
         setTypedState(prev => {
           const next = [...prev]
           if (!next[lineIdx]) next[lineIdx] = { line, charsSoFar: 0, isComplete: true }
@@ -234,9 +253,8 @@ function CRTMonitor({ monitorRef }) {
     }, 28)
 
     return () => clearInterval(intervalRef.current)
-  }, [])
+  }, [isActive])
 
-  // Find the currently typing line index for cursor placement
   const currentLineIdx = lineIdxRef.current
 
   const content = (
@@ -283,43 +301,63 @@ function CRTMonitor({ monitorRef }) {
     </div>
   )
 
-  return createPortal(
+  return (
     <div ref={monitorRef} className="crt-bezel">
       <div className="crt-screen">
         <div className="crt-scanlines" />
         {content}
       </div>
-    </div>,
-    document.body
+    </div>
   )
 }
 
 // ─── Polaroid layer ───────────────────────────────────────────────────────────
-function PolaroidLayer({ onEnlargeRequest, monitorRef }) {
+function PolaroidLayer({ onEnlargeRequest, monitorRef, isActive }) {
+  const initSlotsRef  = useRef(null)
+  const physicsRef    = useRef({})
+
   const [slots, setSlots] = useState(() => {
     const pool = shuffle(PHOTO_POOL)
     const mb = getApproxMonitorBounds()
+    const vw = window.innerWidth, vh = window.innerHeight
+    const shipLandX = vw / 2 - POLAROID_W / 2
+    const shipLandY = vh * 0.89 - POLAROID_H / 2
+    const shipZone = { x: shipLandX - 80, y: shipLandY - 60, w: POLAROID_W + 160, h: POLAROID_H + 120 }
     const regions = ['left', 'right', 'bottom']
     const placed = []
-    return Array.from({ length: SLOT_COUNT }, (_, i) => {
+    const result = Array.from({ length: SLOT_COUNT }, (_, i) => {
       const counts = { left: 0, right: 0, bottom: 0 }
       placed.forEach(p => counts[p.region]++)
       const minCount = Math.min(...Object.values(counts))
       const eligible = regions.filter(r => counts[r] === minCount)
       const region = eligible[Math.floor(Math.random() * eligible.length)]
-      const dp = findNonOverlappingBase(region, mb, placed)
+      const dp = findNonOverlappingBase(region, mb, placed, [shipZone])
       placed.push(dp)
-      return { id: `slot-${i}`, src: pool[i % pool.length], opacity: 1, driftParams: dp }
+      const id = `slot-${i}`
+      const speed = 1 + Math.random() * 20
+      const angle = Math.random() * Math.PI * 2
+      physicsRef.current[id] = { px: dp.baseX, py: dp.baseY, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed }
+      return { id, src: pool[i % pool.length], opacity: 0, rotation: dp.rotation,
+               fadeDelay: 300 + Math.random() * 3800 }
     })
+    initSlotsRef.current = result
+    return result
   })
 
-  const elemRefs    = useRef([])
-  const rafRef      = useRef(null)
+  useEffect(() => {
+    const timers = initSlotsRef.current.map(slot =>
+      setTimeout(() => {
+        setSlots(prev => prev.map(s => s.id === slot.id ? { ...s, opacity: 1 } : s))
+      }, slot.fadeDelay)
+    )
+    return () => timers.forEach(clearTimeout)
+  }, [])
+
+  const elemRefs     = useRef([])
+  const rafRef       = useRef(null)
   const pendingSwaps = useRef({})
-  // Cache monitor bounds for collision
   const monitorBoundsRef = useRef(null)
 
-  // Update monitor bounds on resize
   useEffect(() => {
     const updateBounds = () => {
       if (monitorRef?.current) {
@@ -337,87 +375,102 @@ function PolaroidLayer({ onEnlargeRequest, monitorRef }) {
     }
   }, [monitorRef])
 
+  // Refresh bounds when section becomes active (bounds were stale if rendered off-screen)
   useEffect(() => {
+    if (!isActive || !monitorRef?.current) return
+    const r = monitorRef.current.getBoundingClientRect()
+    monitorBoundsRef.current = { x: r.left, y: r.top, w: r.width, h: r.height }
+  }, [isActive, monitorRef])
+
+  useEffect(() => {
+    let lastT = null
     const tick = (t) => {
-      const polaroidW = POLAROID_W
-      const polaroidH = POLAROID_H
-      const mb = monitorBoundsRef.current
-      const BUFFER = 10
-      const GAP = 16  // minimum gap between polaroid edges
-
-      // Step 1: compute raw Lissajous positions for all active polaroids
-      const active = slots.map((slot, i) => {
-        const el = elemRefs.current[i]
-        if (!el || slot.opacity === 0) return null
-        const dp = slot.driftParams
-        return {
-          i, el, slot, dp,
-          px: dp.baseX + Math.sin(t * dp.freqX + dp.phaseX) * dp.ampX,
-          py: dp.baseY + Math.cos(t * dp.freqY + dp.phaseY) * dp.ampY,
-        }
-      })
-
-      // Step 2: push each polaroid out of monitor (safety net)
-      const pushOut = (p, zone, noUp = false) => {
-        const pRight  = p.px + polaroidW
-        const pBottom = p.py + polaroidH
-        const overlapX = p.px < zone.x + zone.w + BUFFER && pRight  > zone.x - BUFFER
-        const overlapY = p.py < zone.y + zone.h + BUFFER && pBottom > zone.y - BUFFER
-        if (!overlapX || !overlapY) return
-        const dLeft   = Math.abs(pRight  - (zone.x - BUFFER))
-        const dRight  = Math.abs(p.px    - (zone.x + zone.w + BUFFER))
-        const dTop    = Math.abs(pBottom - (zone.y - BUFFER))
-        const dBottom = Math.abs(p.py    - (zone.y + zone.h + BUFFER))
-        const minDist = noUp
-          ? Math.min(dLeft, dRight, dBottom)
-          : Math.min(dLeft, dRight, dTop, dBottom)
-        if (minDist === dLeft)        p.px = zone.x - polaroidW - BUFFER
-        else if (minDist === dRight)  p.px = zone.x + zone.w + BUFFER
-        else if (!noUp && minDist === dTop) p.py = zone.y - polaroidH - BUFFER
-        else                          p.py = zone.y + zone.h + BUFFER
+      // Gate: only update bounds when About is active
+      if (activeSection.current !== 'about') {
+        polaroidBounds.current = []
+        rafRef.current = requestAnimationFrame(tick)
+        return
       }
 
-      for (const p of active) {
+      const dt  = lastT === null ? 16 : Math.min(t - lastT, 50)
+      lastT = t
+      const sec = dt / 1000
+      const phy = physicsRef.current
+      const mb  = monitorBoundsRef.current
+      const vw  = window.innerWidth, vh = window.innerHeight
+      const M   = REGION_MARGIN
+      const PBUF = 10
+      const GAP  = 8
+
+      for (const slot of slots) {
+        const p = phy[slot.id]
         if (!p) continue
-        if (mb) pushOut(p, mb, true)   // monitor: never push upward (safety net)
+        p.px += p.vx * sec
+        p.py += p.vy * sec
       }
 
-      // Step 3: inter-polaroid separation (3 relaxation passes)
-      for (let iter = 0; iter < 3; iter++) {
-        for (let a = 0; a < active.length; a++) {
-          if (!active[a]) continue
-          for (let b = a + 1; b < active.length; b++) {
-            if (!active[b]) continue
-            const pa = active[a], pb = active[b]
-            const overlapX = pa.px < pb.px + polaroidW + GAP && pa.px + polaroidW + GAP > pb.px
-            const overlapY = pa.py < pb.py + polaroidH + GAP && pa.py + polaroidH + GAP > pb.py
-            if (!overlapX || !overlapY) continue
-            const dx = (pa.px + polaroidW / 2) - (pb.px + polaroidW / 2)
-            const dy = (pa.py + polaroidH / 2) - (pb.py + polaroidH / 2)
-            const overlapAmtX = (polaroidW + GAP) - Math.abs(dx)
-            const overlapAmtY = (polaroidH + GAP) - Math.abs(dy)
-            if (overlapAmtX < overlapAmtY) {
-              const push = overlapAmtX / 2 + 1
-              const dir = dx >= 0 ? 1 : -1
-              pa.px += dir * push
-              pb.px -= dir * push
+      for (const slot of slots) {
+        const p = phy[slot.id]
+        if (!p) continue
+        const maxX = vw - M - POLAROID_W
+        const maxY = vh - M - POLAROID_H
+        if (p.px < M)    { p.px = M;    p.vx =  Math.abs(p.vx) }
+        if (p.px > maxX) { p.px = maxX; p.vx = -Math.abs(p.vx) }
+        if (p.py < M)    { p.py = M;    p.vy =  Math.abs(p.vy) }
+        if (p.py > maxY) { p.py = maxY; p.vy = -Math.abs(p.vy) }
+      }
+
+      if (mb) {
+        const mL = mb.x - PBUF, mR = mb.x + mb.w + PBUF
+        const mT = mb.y - PBUF, mB = mb.y + mb.h + PBUF
+        for (const slot of slots) {
+          const p = phy[slot.id]
+          if (!p) continue
+          const pR = p.px + POLAROID_W, pB = p.py + POLAROID_H
+          if (p.px < mR && pR > mL && p.py < mB && pB > mT) {
+            const oL = pR - mL,  oR = mR - p.px
+            const oT = pB - mT,  oB = mB - p.py
+            const min = Math.min(oL, oR, oT, oB)
+            if      (min === oL) { p.px = mL - POLAROID_W; if (p.vx > 0) p.vx = -p.vx }
+            else if (min === oR) { p.px = mR;               if (p.vx < 0) p.vx = -p.vx }
+            else if (min === oT) { p.py = mT - POLAROID_H;  if (p.vy > 0) p.vy = -p.vy }
+            else                 { p.py = mB;               if (p.vy < 0) p.vy = -p.vy }
+          }
+        }
+      }
+
+      for (let a = 0; a < slots.length; a++) {
+        const pa = phy[slots[a].id]
+        if (!pa) continue
+        for (let b = a + 1; b < slots.length; b++) {
+          const pb = phy[slots[b].id]
+          if (!pb) continue
+          const dx  = pa.px - pb.px
+          const dy  = pa.py - pb.py
+          const ovX = (POLAROID_W + GAP) - Math.abs(dx)
+          const ovY = (POLAROID_H + GAP) - Math.abs(dy)
+          if (ovX > 0 && ovY > 0) {
+            if (ovX < ovY) {
+              const push = ovX / 2 + 1, dir = dx >= 0 ? 1 : -1
+              pa.px += dir * push; pb.px -= dir * push
+              const tmp = pa.vx; pa.vx = pb.vx; pb.vx = tmp
             } else {
-              const push = overlapAmtY / 2 + 1
-              const dir = dy >= 0 ? 1 : -1
-              pa.py += dir * push
-              pb.py -= dir * push
+              const push = ovY / 2 + 1, dir = dy >= 0 ? 1 : -1
+              pa.py += dir * push; pb.py -= dir * push
+              const tmp = pa.vy; pa.vy = pb.vy; pb.vy = tmp
             }
           }
         }
       }
 
-      // Step 4: apply transforms and collect laser-hit bounds
       const bounds = []
-      for (const p of active) {
-        if (!p) continue
-        p.el.style.transform = `translate(${p.px}px, ${p.py}px) rotate(${p.dp.rotation}deg)`
-        const rect = p.el.getBoundingClientRect()
-        bounds.push({ id: p.slot.id, x: rect.left, y: rect.top, w: rect.width, h: rect.height })
+      for (let i = 0; i < slots.length; i++) {
+        const el = elemRefs.current[i]
+        const p  = phy[slots[i].id]
+        if (!el || !p || slots[i].opacity === 0) continue
+        el.style.transform = `translate(${p.px}px, ${p.py}px) rotate(${slots[i].rotation}deg)`
+        const rect = el.getBoundingClientRect()
+        bounds.push({ id: slots[i].id, x: rect.left, y: rect.top, w: rect.width, h: rect.height })
       }
       polaroidBounds.current = bounds
       rafRef.current = requestAnimationFrame(tick)
@@ -440,12 +493,20 @@ function PolaroidLayer({ onEnlargeRequest, monitorRef }) {
         const pool = available.length > 0 ? available : PHOTO_POOL
         const newSrc = pool[Math.floor(Math.random() * pool.length)]
         const mb = monitorBoundsRef.current || getApproxMonitorBounds()
-        const currentParams = prev.filter(s2 => s2.id !== id && s2.opacity > 0).map(s2 => s2.driftParams)
+        const currentParams = prev
+          .filter(s => s.id !== id && s.opacity > 0)
+          .map(s => {
+            const p = physicsRef.current[s.id]
+            return { baseX: p?.px ?? 0, baseY: p?.py ?? 0, region: 'bottom' }
+          })
         const regions = ['left', 'right', 'bottom']
         const region = regions[Math.floor(Math.random() * regions.length)]
         const dp = findNonOverlappingBase(region, mb, currentParams)
+        const speed = 25 + Math.random() * 20
+        const angle = Math.random() * Math.PI * 2
+        physicsRef.current[id] = { px: dp.baseX, py: dp.baseY, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed }
         return prev.map(s => s.id === id
-          ? { ...s, src: newSrc, opacity: 1, driftParams: dp }
+          ? { ...s, src: newSrc, opacity: 1, rotation: -7 + Math.random() * 14 }
           : s
         )
       })
@@ -462,28 +523,30 @@ function PolaroidLayer({ onEnlargeRequest, monitorRef }) {
     return () => { Object.values(pendingSwaps.current).forEach(clearTimeout) }
   }, [])
 
-  return createPortal(
-    <>
-      {slots.map((slot, i) => (
-        <div
-          key={slot.id}
-          ref={el => { elemRefs.current[i] = el }}
-          className="polaroid"
-          onClick={() => slot.opacity > 0 && onEnlargeRequest(slot.src)}
-          style={{
-            opacity: slot.opacity,
-            transform: `translate(${slot.driftParams.baseX}px, ${slot.driftParams.baseY}px) rotate(${slot.driftParams.rotation}deg)`,
-            top: 0,
-            left: 0,
-            transition: 'opacity 0.6s ease',
-          }}
-        >
-          <img src={slot.src} alt="adventure photo" draggable={false} />
-          <div className="polaroid-caption">⛰</div>
-        </div>
-      ))}
-    </>,
-    document.body
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+      {slots.map((slot, i) => {
+        const initP = physicsRef.current[slot.id] || { px: 0, py: 0 }
+        return (
+          <div
+            key={slot.id}
+            ref={el => { elemRefs.current[i] = el }}
+            className="polaroid"
+            onClick={() => slot.opacity > 0 && onEnlargeRequest(slot.src)}
+            style={{
+              opacity: slot.opacity,
+              transform: `translate(${initP.px}px, ${initP.py}px) rotate(${slot.rotation}deg)`,
+              top: 0,
+              left: 0,
+              transition: 'opacity 2.5s ease',
+            }}
+          >
+            <img src={slot.src} alt="adventure photo" draggable={false} />
+            <div className="polaroid-caption">⛰</div>
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
@@ -576,22 +639,19 @@ function EnlargedOverlay({ src, onClose, exifDates }) {
 }
 
 // ─── Main export ──────────────────────────────────────────────────────────────
-export default function About() {
+export default function About({ isActive }) {
   const [enlargedSrc, setEnlargedSrc] = useState(null)
   const [exifDates, setExifDates] = useState({})
   const monitorRef = useRef(null)
 
-  // Disable ship control while photo is enlarged
   useEffect(() => {
     shipControlDisabled.current = !!enlargedSrc
   }, [enlargedSrc])
 
-  // Clear control disable on unmount
   useEffect(() => {
     return () => { shipControlDisabled.current = false }
   }, [])
 
-  // Load EXIF dates for all photos asynchronously
   useEffect(() => {
     let cancelled = false
     const loadDates = async () => {
@@ -623,31 +683,30 @@ export default function About() {
 
   return (
     <>
-      <CRTMonitor monitorRef={monitorRef} />
+      <CRTMonitor monitorRef={monitorRef} isActive={isActive} />
+
       {/* "shoot the photos" caption */}
-      {createPortal(
-        <p style={{
-          position: 'fixed',
-          /* sits just above the CRT bezel top edge (monitor center ~42vh, half-height ~209px) */
-          top: 'calc(42vh - 236px)',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 11,
-          fontFamily: '"Courier New", Consolas, monospace',
-          fontSize: '10px',
-          fontWeight: 400,
-          letterSpacing: '0.2em',
-          textTransform: 'uppercase',
-          color: 'rgba(0, 224, 64, 0.75)',
-          textShadow: '0 0 10px rgba(0, 224, 64, 0.55)',
-          whiteSpace: 'nowrap',
-          pointerEvents: 'none',
-        }}>
-          [ shoot the photos ]
-        </p>,
-        document.body
-      )}
-      <PolaroidLayer onEnlargeRequest={setEnlargedSrc} monitorRef={monitorRef} />
+      <p style={{
+        position: 'absolute',
+        top: 'calc(42vh - 236px)',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 11,
+        fontFamily: '"Courier New", Consolas, monospace',
+        fontSize: '10px',
+        fontWeight: 400,
+        letterSpacing: '0.2em',
+        textTransform: 'uppercase',
+        color: 'rgba(0, 224, 64, 0.75)',
+        textShadow: '0 0 10px rgba(0, 224, 64, 0.55)',
+        whiteSpace: 'nowrap',
+        pointerEvents: 'none',
+      }}>
+        [ shoot the photos ]
+      </p>
+
+      <PolaroidLayer isActive={isActive} onEnlargeRequest={setEnlargedSrc} monitorRef={monitorRef} />
+
       {enlargedSrc && (
         <EnlargedOverlay
           src={enlargedSrc}

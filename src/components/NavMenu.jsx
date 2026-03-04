@@ -49,6 +49,7 @@ export default function NavMenu({ screen, onNavigate }) {
         right: 20,
         zIndex: 200,
         userSelect: 'none',
+        paddingBottom: open ? '8px' : 0,
       }}
     >
       {/* Icon */}
