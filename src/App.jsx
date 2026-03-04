@@ -39,6 +39,8 @@ export default function App() {
   const scrollContainerRef = useRef(null)
   const wrapRef            = useRef(null)
   const passableEdgesRef   = useRef(new Set())
+  const cellHRef           = useRef(window.innerHeight)
+  const cellWRef           = useRef(window.innerWidth)
 
   // Keep currentSectionRef in sync
   useEffect(() => { currentSectionRef.current = currentSection }, [currentSection])
@@ -57,19 +59,31 @@ export default function App() {
   // Set initial scroll to the landing cell on mount
   useEffect(() => {
     const el = scrollContainerRef.current
-    el.scrollLeft = window.innerWidth
-    el.scrollTop  = window.innerHeight
+    const h = window.innerHeight
+    const w = window.innerWidth
+    cellHRef.current = h
+    cellWRef.current = w
+    document.documentElement.style.setProperty('--cell-h', h + 'px')
+    document.documentElement.style.setProperty('--cell-w', w + 'px')
+    el.scrollLeft = w
+    el.scrollTop  = h
   }, [])
 
   // Snap scroll to current section on window resize (prevents drift)
   useEffect(() => {
     const snap = () => {
       if (isPanningRef.current) return
+      const h = window.innerHeight
+      const w = window.innerWidth
+      cellHRef.current = h
+      cellWRef.current = w
+      document.documentElement.style.setProperty('--cell-h', h + 'px')
+      document.documentElement.style.setProperty('--cell-w', w + 'px')
       const { col, row } = GRID[currentSectionRef.current]
       const el = scrollContainerRef.current
       if (el) {
-        el.scrollLeft = col * window.innerWidth
-        el.scrollTop  = row * window.innerHeight
+        el.scrollLeft = col * w
+        el.scrollTop  = row * h
       }
     }
     window.addEventListener('resize', snap)
@@ -107,8 +121,8 @@ export default function App() {
       const el       = scrollContainerRef.current
       const startX   = el.scrollLeft
       const startY   = el.scrollTop
-      const endX     = to.col * window.innerWidth
-      const endY     = to.row * window.innerHeight
+      const endX     = to.col * cellWRef.current
+      const endY     = to.row * cellHRef.current
       const duration = 700
       const t0       = performance.now()
 
@@ -169,35 +183,35 @@ export default function App() {
   return (
     <div
       ref={scrollContainerRef}
-      style={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}
+      style={{ width: 'var(--cell-w)', height: 'var(--cell-h)', overflow: 'hidden', position: 'relative' }}
     >
       <StarField />
 
       {/* World: 3×3 grid of viewport-sized cells */}
-      <div style={{ position: 'absolute', width: '300vw', height: '300vh' }}>
+      <div style={{ position: 'absolute', width: 'calc(3 * var(--cell-w))', height: 'calc(3 * var(--cell-h))' }}>
 
         {/* Landing — col:1, row:1 */}
-        <div style={{ position: 'absolute', left: '100vw', top: '100vh', width: '100vw', height: '100vh' }}>
+        <div style={{ position: 'absolute', left: 'var(--cell-w)', top: 'var(--cell-h)', width: 'var(--cell-w)', height: 'var(--cell-h)' }}>
           <LandingScreen hasMovedShip={shipHasMoved} />
         </div>
 
         {/* About — col:1, row:0 */}
-        <div style={{ position: 'absolute', left: '100vw', top: 0, width: '100vw', height: '100vh' }}>
+        <div style={{ position: 'absolute', left: 'var(--cell-w)', top: 0, width: 'var(--cell-w)', height: 'var(--cell-h)' }}>
           <About isActive={currentSection === 'about'} />
         </div>
 
         {/* Now — col:2, row:1 */}
-        <div style={{ position: 'absolute', left: '200vw', top: '100vh', width: '100vw', height: '100vh', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', left: 'calc(2 * var(--cell-w))', top: 'var(--cell-h)', width: 'var(--cell-w)', height: 'var(--cell-h)', overflow: 'hidden' }}>
           <Now isActive={currentSection === 'now'} />
         </div>
 
         {/* Resume — col:1, row:2 */}
-        <div style={{ position: 'absolute', left: '100vw', top: '200vh', width: '100vw', height: '100vh' }}>
+        <div style={{ position: 'absolute', left: 'var(--cell-w)', top: 'calc(2 * var(--cell-h))', width: 'var(--cell-w)', height: 'var(--cell-h)' }}>
           <SectionScreen section="resume" isActive={currentSection === 'resume'} />
         </div>
 
         {/* Projects — col:0, row:1 */}
-        <div style={{ position: 'absolute', left: 0, top: '100vh', width: '100vw', height: '100vh' }}>
+        <div style={{ position: 'absolute', left: 0, top: 'var(--cell-h)', width: 'var(--cell-w)', height: 'var(--cell-h)' }}>
           <Projects isActive={currentSection === 'projects'} />
         </div>
 

@@ -590,10 +590,10 @@ function ProjectOverlay({ project, cfg, onClose, cardRef }) {
         </div>
 
         {(project.image || project.video) && (
-          <div style={{ borderRadius: '6px', overflow: 'hidden', border: `1px solid ${CBD}`, marginBottom: '16px', aspectRatio: isMobile ? '1/1' : '16/9' }}>
+          <div style={{ borderRadius: '6px', overflow: 'hidden', border: `1px solid ${CBD}`, marginBottom: '16px' }}>
             {project.video
               ? <video src={project.video} autoPlay muted loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              : <img src={project.image} alt={project.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <img src={project.image} alt={project.title} style={{ width: '100%', height: 'auto', display: 'block' }} />
             }
           </div>
         )}
