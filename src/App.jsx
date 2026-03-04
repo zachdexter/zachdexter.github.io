@@ -95,6 +95,15 @@ export default function App() {
       activeSection.current = null  // disable all section interactions during pan
       dockingState.current  = null  // undock ship on any navigation
 
+      // Nav fly-in starts immediately as the camera begins moving so both arrive together
+      if (source === 'nav') {
+        wrapRef.current?.({
+          type: 'nav-arrive',
+          from: fromSection,
+          to: dest,
+        })
+      }
+
       const el       = scrollContainerRef.current
       const startX   = el.scrollLeft
       const startY   = el.scrollTop
@@ -115,21 +124,13 @@ export default function App() {
           isPanningRef.current  = false
           activeSection.current = dest
 
-          // Decide how to reposition the ship based on pan source
+          // Edge-exit pan: preserve existing wrap behavior
           if (source === 'ship') {
-            // Edge-exit pan: preserve existing wrap behavior
             const isAdjacent = Math.abs(dc) + Math.abs(dr) === 1
             wrapRef.current?.({
               type: 'edge-wrap',
               dx: isAdjacent ? dc : 0,
               dy: isAdjacent ? dr : 0,
-            })
-          } else if (source === 'nav') {
-            // Nav click: trigger section-aware fly-in after scroll
-            wrapRef.current?.({
-              type: 'nav-arrive',
-              from: fromSection,
-              to: dest,
             })
           }
         }

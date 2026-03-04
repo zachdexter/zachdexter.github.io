@@ -4,8 +4,15 @@ import { polaroidBounds, polaroidHitHandler, shipControlDisabled, monitorBounds,
 
 // ── EDIT PHOTO DATES HERE ──────────────────────────────────────────
 const PHOTO_DATE_OVERRIDES = {
-  'meLuge.png': 'Summer 2023',
-  'meGeorgeBondiCliff.png': 'Jan 2024',
+  'meLuge.png': 'Feb 2026',
+  'meGeorgeBondiCliff.png': 'Jan 2026',
+  'meDrivingNZ.jpg': 'Feb 2026',
+  'meGeorgeNZPier.jpg': 'Feb 2026', 
+  'meBenOutdoor3.jpg': 'Oct 2025',
+  'meBenOutdoor2.JPG': 'Oct 2025',
+  'meBenOutdoor.JPG': 'Oct 2025',
+  'meOutdoorActionshot5.jpg': 'Nov 2025',
+  'meNZBridge.jpg': 'Feb 2026',
 }
 // ──────────────────────────────────────────────────────────────────
 
@@ -31,7 +38,7 @@ const PHOTO_POOL = [
   '/assets/about/meLuge.png',
   '/assets/about/meGeorgeBondiCliff.png',
   '/assets/about/meOutdoorActionshot5.jpg',
-  '/assets/about/MeBenOutdoor3.jpg',
+  '/assets/about/meBenOutdoor3.jpg',
 ]
 
 const SLOT_COUNT = 7
@@ -44,6 +51,8 @@ const CONTENT_LINES = [
   { type: 'text', value: '  Interested in SW Development & Cybersecurity!' },
   { type: 'text', value: '  When I\'m not behind a screen I spend a' },
   { type: 'text', value: "  lot of my time climbing or reading." },
+  { type: 'text', value: '    ' },
+
   { type: 'text', value: '  On this page you\'ll find some proof that' },
   { type: 'text', value: '  I actually do touch grass :)' },
 

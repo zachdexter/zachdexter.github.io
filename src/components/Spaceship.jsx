@@ -126,16 +126,22 @@ export default function Spaceship({
   const onExitEdgeRef  = useRef(onExitEdge)
   const onFirstMoveRef = useRef(onFirstMove)
   const canvasRef      = useRef(null)
+  const glowCanvasRef  = useRef(null)
 
   useEffect(() => { onExitEdgeRef.current  = onExitEdge  }, [onExitEdge])
   useEffect(() => { onFirstMoveRef.current = onFirstMove }, [onFirstMove])
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    const ctx    = canvas.getContext('2d')
+    const canvas     = canvasRef.current
+    const glowCanvas = glowCanvasRef.current
+    const ctx        = canvas.getContext('2d')
+    const glowCtx    = glowCanvas.getContext('2d')
     let animId
 
-    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight }
+    const resize = () => {
+      canvas.width      = window.innerWidth;  canvas.height      = window.innerHeight
+      glowCanvas.width  = window.innerWidth;  glowCanvas.height  = window.innerHeight
+    }
     resize()
     window.addEventListener('resize', resize)
 
@@ -154,7 +160,7 @@ export default function Spaceship({
     let shipGone       = false
 
     // Nav re-entry animation state
-    const NAV_ENTRY_DURATION_MS = 1000  // was 60 frames @ 60 fps
+    const NAV_ENTRY_DURATION_MS = 650  // matches scroll duration so ship lands as camera settles
     let navEntryElapsed = 0
     let navEntryActive  = false
     let navEntryThrust  = false
@@ -306,6 +312,7 @@ export default function Spaceship({
       const dtScale  = dt / MS_PER_FRAME  // 1.0 at 60 fps, 0.5 at 120 fps, etc.
 
       ctx.clearRect(0, 0, canvas.width, canvas.height)
+      glowCtx.clearRect(0, 0, glowCanvas.width, glowCanvas.height)
       const w = canvas.width
       const h = canvas.height
 
@@ -580,6 +587,18 @@ export default function Spaceship({
         }
       }
 
+      // --- Glow indicator (About page only — sits above polaroids at zIndex 8) ---
+      if (activeSection.current === 'about') {
+        const gr = glowCtx.createRadialGradient(ship.x, ship.y, 0, ship.x, ship.y, 22)
+        gr.addColorStop(0,   'rgba(125, 211, 252, 0.28)')
+        gr.addColorStop(0.5, 'rgba(125, 211, 252, 0.10)')
+        gr.addColorStop(1,   'rgba(125, 211, 252, 0)')
+        glowCtx.beginPath()
+        glowCtx.arc(ship.x, ship.y, 22, 0, Math.PI * 2)
+        glowCtx.fillStyle = gr
+        glowCtx.fill()
+      }
+
       // --- Draw ship ---
       drawShip(ctx, ship.x, ship.y, ship.angle, thrusting)
 
@@ -598,9 +617,16 @@ export default function Spaceship({
   }, []) // eslint-disable-line
 
   return (
-    <canvas
-      ref={canvasRef}
-      style={{ position: 'fixed', inset: 0, zIndex: 2, pointerEvents: 'none' }}
-    />
+    <>
+      <canvas
+        ref={canvasRef}
+        style={{ position: 'fixed', inset: 0, zIndex: 2, pointerEvents: 'none' }}
+      />
+      {/* Glow-only canvas sits above polaroids (zIndex 6) on the About page */}
+      <canvas
+        ref={glowCanvasRef}
+        style={{ position: 'fixed', inset: 0, zIndex: 8, pointerEvents: 'none' }}
+      />
+    </>
   )
 }
