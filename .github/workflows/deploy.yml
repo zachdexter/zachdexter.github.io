@@ -21,8 +21,8 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
-          VITE_LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
-          VITE_LASTFM_USERNAME: sumitpoz
+          VITE_LASTFM_API_KEY: ${{ secrets.VITE_LASTFM_API_KEY }}
+          VITE_LASTFM_USERNAME: ${{ secrets.VITE_LASTFM_USERNAME }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
