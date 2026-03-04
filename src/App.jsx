@@ -138,15 +138,20 @@ export default function App() {
     }
 
     if (source === 'nav') {
-      // Trigger explosion; scroll starts only after the explosion callback fires
-      wrapRef.current?.({
-        type: 'nav-depart',
-        from: fromSection,
-        to: dest,
-        dc,
-        dr,
-        onDone: startScroll,
-      })
+      if (wrapRef.current) {
+        // Trigger explosion; scroll starts only after the explosion callback fires
+        wrapRef.current({
+          type: 'nav-depart',
+          from: fromSection,
+          to: dest,
+          dc,
+          dr,
+          onDone: startScroll,
+        })
+      } else {
+        // No spaceship on mobile — scroll immediately
+        startScroll()
+      }
     } else {
       // Ship-triggered edge exit: start scroll immediately
       startScroll()
@@ -181,13 +186,13 @@ export default function App() {
         </div>
 
         {/* Now — col:2, row:1 */}
-        <div style={{ position: 'absolute', left: '200vw', top: '100vh', width: '100vw', height: '100vh' }}>
+        <div style={{ position: 'absolute', left: '200vw', top: '100vh', width: '100vw', height: '100vh', overflow: 'hidden' }}>
           <Now isActive={currentSection === 'now'} />
         </div>
 
         {/* Resume — col:1, row:2 */}
         <div style={{ position: 'absolute', left: '100vw', top: '200vh', width: '100vw', height: '100vh' }}>
-          <SectionScreen section="resume" />
+          <SectionScreen section="resume" isActive={currentSection === 'resume'} />
         </div>
 
         {/* Projects — col:0, row:1 */}

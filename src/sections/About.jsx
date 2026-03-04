@@ -40,17 +40,28 @@ const CONTENT_LINES = [
   { type: 'text', value: '> DEXTER, ZACHARY' },
   { type: 'text', value: "  GWU CS '27" },
   { type: 'blank' },
-  { type: 'text', value: '  CS student at George Washington University.' },
-  { type: 'text', value: '  I build things that feel good to use — software,' },
-  { type: 'text', value: '  games, and whatever gets me outside. Mostly' },
-  { type: 'text', value: "  you'll find me climbing, hiking, or chasing" },
-  { type: 'text', value: '  the next adventure.' },
+  // { type: 'text', value: '  CS student at George Washington University.' },
+  { type: 'text', value: '  Interested in SW Development & Cybersecurity!' },
+  { type: 'text', value: '  When I\'m not behind a screen I spend a' },
+  { type: 'text', value: "  lot of my time climbing or reading." },
+  { type: 'text', value: '  On this page you\'ll find some proof that' },
+  { type: 'text', value: '  I actually do touch grass :)' },
+
   { type: 'blank' },
   { type: 'text', value: '> CONNECTIONS:' },
   { type: 'link', label: '  github.com/zachdexter',          href: 'https://github.com/zachdexter' },
   { type: 'link', label: '  linkedin.com/in/zachary-dexter', href: 'https://www.linkedin.com/in/zachary-dexter/' },
   { type: 'link', label: '  open.spotify.com/zachdexter',    href: 'https://open.spotify.com/user/obu6xa01d9uil79bnsezpr7b2' },
   { type: 'link', label: '  instagram.com/zsdexter',         href: 'https://www.instagram.com/zsdexter/' },
+  {
+    type: 'links-row',
+    links: [
+      { label: '[GH]', href: 'https://github.com/zachdexter' },
+      { label: '[LI]', href: 'https://www.linkedin.com/in/zachary-dexter/' },
+      { label: '[SP]', href: 'https://open.spotify.com/user/obu6xa01d9uil79bnsezpr7b2' },
+      { label: '[IG]', href: 'https://www.instagram.com/zsdexter/' },
+    ],
+  },
 ]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -219,7 +230,10 @@ function CRTMonitor({ monitorRef, isActive }) {
 
       const line = CONTENT_LINES[lineIdx]
 
-      if (line.type === 'blank') {
+      const skipInstantly = line.type === 'blank'
+        || line.type === 'links-row'
+        || (line.type === 'link' && window.innerWidth < 768)
+      if (skipInstantly) {
         setTypedState(prev => {
           const next = [...prev]
           if (!next[lineIdx]) next[lineIdx] = { line, charsSoFar: 0, isComplete: true }
@@ -256,6 +270,7 @@ function CRTMonitor({ monitorRef, isActive }) {
   }, [isActive])
 
   const currentLineIdx = lineIdxRef.current
+  const isMobile = window.innerWidth < 768
 
   const content = (
     <div className="crt-content">
@@ -269,14 +284,51 @@ function CRTMonitor({ monitorRef, isActive }) {
           return <div key={i} style={{ height: '0.6em' }} />
         }
 
+        // On mobile, skip individual link lines — the links-row entry handles them
+        if (line.type === 'link' && isMobile) return null
+
+        // On desktop, skip the links-row entry — individual links handle them
+        if (line.type === 'links-row' && !isMobile) return null
+
+        if (line.type === 'links-row') {
+          // Compact single-line icon row — underlined labels, no brackets
+          return (
+            <div key={i} style={{ display: 'flex', gap: '20px', marginTop: '4px' }}>
+              {line.links.map(lk => (
+                <a
+                  key={lk.label}
+                  href={lk.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontFamily: 'inherit',
+                    fontSize: 'inherit',
+                    color: '#00e040',
+                    textDecoration: 'underline',
+                    letterSpacing: '0.12em',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {lk.label}
+                </a>
+              ))}
+            </div>
+          )
+        }
+
         if (line.type === 'link') {
           const displayed = line.label.slice(0, charsSoFar)
+          const prefix  = line.label.match(/^\s*/)[0]
+          const trimmed = line.label.trimStart()
           return (
             <div key={i}>
               {isComplete ? (
-                <a href={line.href} target="_blank" rel="noopener noreferrer" className="crt-link">
-                  {line.label}
-                </a>
+                <span>
+                  {prefix}
+                  <a href={line.href} target="_blank" rel="noopener noreferrer" className="crt-link">
+                    {trimmed}
+                  </a>
+                </span>
               ) : (
                 <span>
                   {displayed}
@@ -312,7 +364,7 @@ function CRTMonitor({ monitorRef, isActive }) {
 }
 
 // ─── Polaroid layer ───────────────────────────────────────────────────────────
-function PolaroidLayer({ onEnlargeRequest, monitorRef, isActive }) {
+function PolaroidLayer({ onEnlargeRequest, monitorRef, isActive, isMobile, onFirstShot }) {
   const initSlotsRef  = useRef(null)
   const physicsRef    = useRef({})
 
@@ -323,12 +375,13 @@ function PolaroidLayer({ onEnlargeRequest, monitorRef, isActive }) {
     const shipLandX = vw / 2 - POLAROID_W / 2
     const shipLandY = vh * 0.89 - POLAROID_H / 2
     const shipZone = { x: shipLandX - 80, y: shipLandY - 60, w: POLAROID_W + 160, h: POLAROID_H + 120 }
-    const regions = ['left', 'right', 'bottom']
+    const slotCount = isMobile ? 2 : SLOT_COUNT
+    const regions = isMobile ? ['bottom'] : ['left', 'right', 'bottom']
     const placed = []
-    const result = Array.from({ length: SLOT_COUNT }, (_, i) => {
+    const result = Array.from({ length: slotCount }, (_, i) => {
       const counts = { left: 0, right: 0, bottom: 0 }
       placed.forEach(p => counts[p.region]++)
-      const minCount = Math.min(...Object.values(counts))
+      const minCount = Math.min(...regions.map(r => counts[r]))
       const eligible = regions.filter(r => counts[r] === minCount)
       const region = eligible[Math.floor(Math.random() * eligible.length)]
       const dp = findNonOverlappingBase(region, mb, placed, [shipZone])
@@ -482,8 +535,14 @@ function PolaroidLayer({ onEnlargeRequest, monitorRef, isActive }) {
     }
   }, [slots])
 
+  const hasFiredFirstShot = useRef(false)
+
   const handleHit = useCallback((id) => {
     if (pendingSwaps.current[id]) return
+    if (!hasFiredFirstShot.current) {
+      hasFiredFirstShot.current = true
+      onFirstShot?.()
+    }
     setSlots(prev => prev.map(s => s.id === id ? { ...s, opacity: 0 } : s))
     const timeout = setTimeout(() => {
       delete pendingSwaps.current[id]
@@ -642,6 +701,7 @@ function EnlargedOverlay({ src, onClose, exifDates }) {
 export default function About({ isActive }) {
   const [enlargedSrc, setEnlargedSrc] = useState(null)
   const [exifDates, setExifDates] = useState({})
+  const [hasShot, setHasShot] = useState(false)
   const monitorRef = useRef(null)
 
   useEffect(() => {
@@ -690,7 +750,6 @@ export default function About({ isActive }) {
         position: 'absolute',
         top: 'calc(42vh - 236px)',
         left: '50%',
-        transform: 'translateX(-50%)',
         zIndex: 11,
         fontFamily: '"Courier New", Consolas, monospace',
         fontSize: '10px',
@@ -698,14 +757,22 @@ export default function About({ isActive }) {
         letterSpacing: '0.2em',
         textTransform: 'uppercase',
         color: 'rgba(0, 224, 64, 0.75)',
-        textShadow: '0 0 10px rgba(0, 224, 64, 0.55)',
         whiteSpace: 'nowrap',
         pointerEvents: 'none',
+        display: window.innerWidth < 768 ? 'none' : undefined,
+        animation: hasShot ? 'none' : 'shoot-hint-pulse 1.6s ease-in-out infinite',
+        transform: 'translateX(-50%)',
       }}>
         [ shoot the photos ]
       </p>
 
-      <PolaroidLayer isActive={isActive} onEnlargeRequest={setEnlargedSrc} monitorRef={monitorRef} />
+      <PolaroidLayer
+        isActive={isActive}
+        onEnlargeRequest={setEnlargedSrc}
+        monitorRef={monitorRef}
+        isMobile={window.innerWidth < 768}
+        onFirstShot={() => setHasShot(true)}
+      />
 
       {enlargedSrc && (
         <EnlargedOverlay

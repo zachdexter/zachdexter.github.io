@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { shipPosition, polaroidBounds, polaroidHitHandler, satelliteBounds, satelliteHitHandler, dockingState, shipControlDisabled, nowIconBounds, nowIconHitHandler, monitorBounds, activeSection } from '../store'
+import { shipPosition, polaroidBounds, polaroidHitHandler, satelliteBounds, satelliteHitHandler, dockingState, shipControlDisabled, nowIconBounds, nowIconHitHandler, monitorBounds, resumeCardBounds, activeSection } from '../store'
 
 // --- Constants ---
 const TURN_SPEED    = 0.09
@@ -13,7 +13,6 @@ const SHIP_RADIUS   = 7
 const EDGE_MARGIN   = 32    // px past edge that triggers exit
 const WALL_INSET    = 14    // ship is clamped this many px inside screen edges (dead-end walls)
 const TRAIL_LENGTH  = 12    // contrail history length
-const FOCUS_DELAY   = 7000  // ms before focus indicator appears
 
 // Nav fly-in configuration per section
 const NAV_ENTRY_CONFIG = {
@@ -24,11 +23,11 @@ const NAV_ENTRY_CONFIG = {
   },
   projects: {
     from: 'right',
-    target: (w, h) => ({ x: w * 0.73, y: h * 0.55 }),
+    target: (w, h) => ({ x: w * 0.85, y: h * 0.5 }),
   },
   now: {
     from: 'left',
-    target: (w, h) => ({ x: w * 0.27, y: h * 0.55 }),
+    target: (w, h) => ({ x: w * 0.15, y: h * 0.5 }),
   },
   resume: {
     from: 'top',
@@ -290,8 +289,6 @@ export default function Spaceship({
 
     const trail = []
 
-    let lastInputTime = Date.now()
-    let focusOpacity  = 0
 
     const lasers      = []
     let laserCooldown = 0
@@ -435,8 +432,6 @@ export default function Spaceship({
       ship.vx *= dragFactor;  ship.vy *= dragFactor
       ship.x  += ship.vx * dtScale;  ship.y  += ship.vy * dtScale
 
-      if (anyInput) lastInputTime = Date.now()
-
       if (!firstMoveFired && anyInput) {
         firstMoveFired = true
         onFirstMoveRef.current?.()
@@ -466,6 +461,11 @@ export default function Spaceship({
       // --- Monitor collision (About page) ---
       if (monitorBounds.current && activeSection.current === 'about') {
         resolveCardCollision(ship, monitorBounds.current)
+      }
+
+      // --- Resume card collision ---
+      if (resumeCardBounds.current && activeSection.current === 'resume') {
+        resolveCardCollision(ship, resumeCardBounds.current)
       }
 
       // --- Now icon circle-circle collision ---
@@ -578,53 +578,6 @@ export default function Spaceship({
           ctx.fillStyle = `rgba(125, 211, 252, ${alpha})`
           ctx.fill()
         }
-      }
-
-      // --- Focus indicator ---
-      const timeSinceInput = Date.now() - lastInputTime
-      if (timeSinceInput > FOCUS_DELAY) {
-        focusOpacity = Math.min(1, focusOpacity + 0.04)
-      } else {
-        focusOpacity = Math.max(0, focusOpacity - 0.07)
-      }
-
-      if (focusOpacity > 0.01) {
-        const pulse = Math.sin(t * 0.003) * 0.3 + 0.7
-        const alpha = focusOpacity * pulse
-        const ringR = 22
-
-        ctx.save()
-        ctx.translate(ship.x, ship.y)
-
-        ctx.beginPath()
-        ctx.arc(0, 0, ringR, 0, Math.PI * 2)
-        ctx.strokeStyle = `rgba(125, 211, 252, ${alpha})`
-        ctx.lineWidth = 1.5
-        ctx.stroke()
-
-        const chevronSize = 4
-        const chevronDist = ringR + 7
-        const dirs = [
-          { angle: 0,             dx: 0,            dy: -chevronDist },
-          { angle: Math.PI,       dx: 0,            dy:  chevronDist },
-          { angle: -Math.PI / 2,  dx: -chevronDist, dy: 0 },
-          { angle: Math.PI / 2,   dx:  chevronDist, dy: 0 },
-        ]
-        ctx.fillStyle = `rgba(125, 211, 252, ${alpha})`
-        dirs.forEach(d => {
-          ctx.save()
-          ctx.translate(d.dx, d.dy)
-          ctx.rotate(d.angle)
-          ctx.beginPath()
-          ctx.moveTo(0, chevronSize)
-          ctx.lineTo(-chevronSize * 0.6, -chevronSize * 0.5)
-          ctx.lineTo( chevronSize * 0.6, -chevronSize * 0.5)
-          ctx.closePath()
-          ctx.fill()
-          ctx.restore()
-        })
-
-        ctx.restore()
       }
 
       // --- Draw ship ---

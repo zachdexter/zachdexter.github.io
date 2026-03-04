@@ -1,4 +1,6 @@
+import { useRef, useEffect } from 'react'
 import Resume from '../sections/Resume'
+import { resumeCardBounds } from '../store'
 
 const PANEL_STYLE = {
   resume: {
@@ -13,9 +15,39 @@ const PANEL_STYLE = {
   },
 }
 
-export default function SectionScreen({ section }) {
+export default function SectionScreen({ section, isActive }) {
+  const cardRef = useRef(null)
+
+  // Track card bounds for ship collision (resume page only)
+  useEffect(() => {
+    if (section !== 'resume') return
+    const update = () => {
+      if (cardRef.current) {
+        const r = cardRef.current.getBoundingClientRect()
+        resumeCardBounds.current = { x: r.left, y: r.top, w: r.width, h: r.height }
+      }
+    }
+    update()
+    window.addEventListener('resize', update)
+    const obs = new ResizeObserver(update)
+    if (cardRef.current) obs.observe(cardRef.current)
+    return () => {
+      window.removeEventListener('resize', update)
+      obs.disconnect()
+      resumeCardBounds.current = null
+    }
+  }, [section])
+
+  // Refresh bounds when section scrolls into view (getBoundingClientRect is stale when off-screen)
+  useEffect(() => {
+    if (section !== 'resume' || !isActive || !cardRef.current) return
+    const r = cardRef.current.getBoundingClientRect()
+    resumeCardBounds.current = { x: r.left, y: r.top, w: r.width, h: r.height }
+  }, [isActive, section])
+
   return (
     <div
+      ref={cardRef}
       style={{
         position: 'absolute',
         top: '50%',

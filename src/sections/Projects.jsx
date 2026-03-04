@@ -10,7 +10,7 @@ const PROJECTS = [
     description:
       'A web app that uses AI to generate personalized Spotify playlists based on user prompts. Built with Node.js, React, and the Spotify API — live previews, user preference handling, and direct export to Spotify accounts.',
     video: '/assets/07.07.2025_spotify_site_2.mp4',
-    github: null,
+    github: 'https://github.com/zachdexter/spotify-ai',
     live: null,
     tags: ['React', 'Node.js', 'Spotify API', 'OpenAI'],
   },
@@ -20,7 +20,7 @@ const PROJECTS = [
     description:
       'Full-stack web app built with Agile methodology. HTML, Bootstrap, and JavaScript on the frontend; Flask + SQLite on the backend to manage course registration and user data.',
     image: '/assets/dbProjSS.png',
-    github: null,
+    github: 'https://github.com/zachdexter/CourseRegistration',
     live: null,
     tags: ['Flask', 'SQLite', 'JavaScript'],
   },
@@ -41,9 +41,19 @@ const PROJECTS = [
     description:
       'A searchable home library system powered by SQL. Manages a personal book collection with sorting by author, title, and genre, plus a quick search feature.',
     image: '/assets/LibrarySS.png',
-    github: null,
+    github: 'https://github.com/zachdexter/home-library',
     live: null,
     tags: ['SQL'],
+  },
+  {
+    id: 'basket-lsat',
+    title: 'Basket LSAT',
+    description:
+      'Production LSAT tutoring SaaS serving 50+ users. Built with Next.js App Router, TypeScript, and Supabase (PostgreSQL + Auth + RLS). Features multi-GB video delivery via Mux Direct Upload, Stripe Checkout with webhook validation, rate limiting, reCAPTCHA, and isolated staging/production environments.',
+    image: '/assets/BasketLSATSS.png',
+    github: 'https://github.com/zachdexter/lsat-site',
+    live: 'https://basketlsat.com',
+    tags: ['Next.js', 'TypeScript', 'Supabase', 'Stripe', 'Mux'],
   },
 ]
 
@@ -127,6 +137,27 @@ const SATELLITE_CONFIGS = [
     antennas: 1,
     blinkRate: 1400,
     trailOpacity: 0.30,
+  },
+  {
+    id: 'basket-lsat',
+    name: 'Basket LSAT',
+    angle: 4.9,
+    radius: 420,
+    speed: 0.000065,
+    inclineY: 0.82,
+    scale: 1.1,
+    color: '#f43f5e',
+    bodyW: 32, bodyH: 13,
+    panels: [
+      { ox: -26, oy: -3, w: 22, h: 4.5, a: 0 },
+      { ox: -26, oy:  3, w: 22, h: 4.5, a: 0 },
+      { ox:  26, oy: -3, w: 22, h: 4.5, a: 0 },
+      { ox:  26, oy:  3, w: 22, h: 4.5, a: 0 },
+    ],
+    dish: 'bottom',
+    antennas: 2,
+    blinkRate: 950,
+    trailOpacity: 0.32,
   },
 ]
 
@@ -336,7 +367,12 @@ function SatelliteCanvas({ onSatelliteClick, selectedIdRef, cardRef, lastUndockT
     resize()
     window.addEventListener('resize', resize)
 
-    const getVScale = () => Math.max(0.55, Math.min(1.0, window.innerWidth / 1440))
+    const isMob = () => canvas.width < 768
+    const getVScale = () => {
+      if (isMob()) return Math.min(0.40, (canvas.width * 0.45) / SATELLITE_CONFIGS[4].radius)
+      return Math.max(0.55, Math.min(1.0, window.innerWidth / 1440))
+    }
+    const getCX = () => canvas.width * (isMob() ? 0.50 : 0.40)
 
     const sats = SATELLITE_CONFIGS.map(cfg => ({
       ...cfg,
@@ -347,11 +383,11 @@ function SatelliteCanvas({ onSatelliteClick, selectedIdRef, cardRef, lastUndockT
 
     const debris = Array.from({ length: 26 }, () => {
       const vscale = getVScale()
-      const cx = window.innerWidth * 0.40
+      const cx = getCX()
       const cy = window.innerHeight * 0.50
       return {
-        x: cx + (Math.random() - 0.5) * (SATELLITE_CONFIGS[3].radius * vscale * 2 + 80),
-        y: cy + (Math.random() - 0.5) * (SATELLITE_CONFIGS[3].radius * vscale * 1.4),
+        x: cx + (Math.random() - 0.5) * (SATELLITE_CONFIGS[4].radius * vscale * 2 + 80),
+        y: cy + (Math.random() - 0.5) * (SATELLITE_CONFIGS[4].radius * vscale * 1.4),
         vx: (Math.random() - 0.5) * 0.18,
         vy: (Math.random() - 0.5) * 0.12,
         size: 1.5 + Math.random() * 2.5,
@@ -372,20 +408,20 @@ function SatelliteCanvas({ onSatelliteClick, selectedIdRef, cardRef, lastUndockT
 
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      // Gate: only show/interact when this section is active
+      // Always draw the scene so it's never empty when the camera pans in.
+      // Only clear collision bounds when not on the projects page so the ship
+      // doesn't collide with off-screen satellites.
       if (activeSection.current !== 'projects') {
         satelliteBounds.current = []
-        animId = requestAnimationFrame(draw)
-        return
       }
 
       const vscale = getVScale()
-      const cx = canvas.width * 0.40
+      const cx = getCX()
       const cy = canvas.height * 0.50
 
       debris.forEach(p => {
         p.x += p.vx; p.y += p.vy; p.angle += p.rotSpeed
-        const maxR = SATELLITE_CONFIGS[3].radius * vscale + 100
+        const maxR = SATELLITE_CONFIGS[4].radius * vscale + 100
         if (Math.hypot(p.x - cx, p.y - cy) > maxR * 1.2) {
           p.x = cx + (Math.random() - 0.5) * maxR
           p.y = cy + (Math.random() - 0.5) * maxR * 0.8
@@ -420,7 +456,8 @@ function SatelliteCanvas({ onSatelliteClick, selectedIdRef, cardRef, lastUndockT
         const dist = Math.hypot(ship.x - sx, ship.y - sy)
         const highlighted = dist < 150
 
-        if (!dockingState.current
+        if (activeSection.current === 'projects'
+            && !dockingState.current
             && dist < sat.bodyW * sat.scale * 0.5 + DOCK_THRESHOLD
             && Date.now() - lastUndockTimeRef.current > UNDOCK_COOLDOWN) {
           dockingState.current = {
@@ -448,11 +485,12 @@ function SatelliteCanvas({ onSatelliteClick, selectedIdRef, cardRef, lastUndockT
     animId = requestAnimationFrame(draw)
 
     const handleClick = (e) => {
+      if (activeSection.current !== 'projects') return
       const rect = canvas.getBoundingClientRect()
       const mx = e.clientX - rect.left
       const my = e.clientY - rect.top
       const vscale = getVScale()
-      const cx = canvas.width * 0.40
+      const cx = getCX()
       const cy = canvas.height * 0.50
 
       for (const sat of SATELLITE_CONFIGS) {
@@ -492,11 +530,12 @@ function SatelliteCanvas({ onSatelliteClick, selectedIdRef, cardRef, lastUndockT
 // ─── Project detail overlay ───────────────────────────────────────────────────
 function ProjectOverlay({ project, cfg, onClose, cardRef }) {
   useEffect(() => {
-    const handler = (e) => { if (e.key === 'Escape') onClose() }
+    const handler = (e) => { if (e.key === 'Escape' || e.key === ' ') onClose() }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [onClose])
 
+  const isMobile = window.innerWidth < 768
   const c = cfg.color
   const CD = `${c}88`
   const CBG = `${c}12`
@@ -516,34 +555,42 @@ function ProjectOverlay({ project, cfg, onClose, cardRef }) {
     >
       <div
         ref={cardRef}
-        onClick={e => e.stopPropagation()}
         style={{
           position: 'fixed',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
+          zIndex: 9001,
+          width: isMobile ? '96vw' : undefined,
+        }}
+      >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
           background: 'rgba(8,12,24,0.97)',
           border: `1px solid ${CBD}`,
-          borderRadius: '12px',
-          padding: '28px',
-          maxWidth: 'min(520px, 88vw)',
+          borderRadius: isMobile ? '10px' : '12px',
+          padding: isMobile ? '16px' : '28px',
           width: '100%',
+          maxWidth: isMobile ? undefined : 'min(520px, 88vw)',
+          maxHeight: isMobile ? '88vh' : undefined,
+          overflowY: isMobile ? 'auto' : undefined,
           boxShadow: `0 0 60px ${c}22, 0 24px 80px rgba(0,0,0,0.7)`,
           animation: 'scaleIn 0.16s ease',
-          zIndex: 9001,
+          position: 'relative',
         }}
       >
         <div style={{ marginBottom: '20px' }}>
           <p style={{ fontFamily: 'var(--font-display)', fontSize: '8px', letterSpacing: '2.5px', color: CD, textTransform: 'uppercase', marginBottom: '6px' }}>
             ◈ SATELLITE — {cfg.name.toUpperCase()}
           </p>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '15px', fontWeight: 700, color: 'var(--star-white)', lineHeight: 1.3 }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? '17px' : '15px', fontWeight: 700, color: 'var(--star-white)', lineHeight: 1.3 }}>
             {project.title}
           </h2>
         </div>
 
         {(project.image || project.video) && (
-          <div style={{ borderRadius: '6px', overflow: 'hidden', border: `1px solid ${CBD}`, marginBottom: '16px', aspectRatio: '16/9' }}>
+          <div style={{ borderRadius: '6px', overflow: 'hidden', border: `1px solid ${CBD}`, marginBottom: '16px', aspectRatio: isMobile ? '1/1' : '16/9' }}>
             {project.video
               ? <video src={project.video} autoPlay muted loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               : <img src={project.image} alt={project.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
@@ -551,7 +598,7 @@ function ProjectOverlay({ project, cfg, onClose, cardRef }) {
           </div>
         )}
 
-        <p style={{ fontSize: '13px', lineHeight: 1.7, color: 'var(--text-muted)', marginBottom: '16px' }}>
+        <p style={{ fontSize: isMobile ? '15px' : '13px', lineHeight: 1.7, color: 'var(--text-muted)', marginBottom: '16px' }}>
           {project.description}
         </p>
 
@@ -568,7 +615,7 @@ function ProjectOverlay({ project, cfg, onClose, cardRef }) {
         </div>
 
         <div style={{ display: 'flex', gap: '10px' }}>
-          {project.live && (
+          {project.live && !(isMobile && project.id === 'breakout') && (
             <a
               href={project.live}
               target={project.live.startsWith('http') ? '_blank' : '_self'}
@@ -624,6 +671,7 @@ function ProjectOverlay({ project, cfg, onClose, cardRef }) {
         >
           ✕
         </button>
+      </div>
       </div>
     </div>,
     document.body
@@ -688,7 +736,7 @@ export default function Projects() {
         letterSpacing: '2.5px', color: 'rgba(125,211,252,0.30)',
         textTransform: 'uppercase', pointerEvents: 'none', userSelect: 'none',
       }}>
-        ◎ FLY CLOSE TO DOCK · CLICK TO VIEW
+        {window.innerWidth < 768 ? '◎ TAP SATELLITES TO VIEW PROJECTS' : '◎ FLY CLOSE TO DOCK · CLICK TO VIEW'}
       </div>
 
       {selectedProject && selectedCfg && (

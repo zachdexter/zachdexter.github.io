@@ -40,6 +40,10 @@ export const nowIconHitHandler = { current: null }
 // { x: number, y: number, w: number, h: number } in viewport coords
 export const monitorBounds = { current: null }
 
+// Resume card bounding box — written by SectionScreen.jsx, cleared on unmount
+// { x: number, y: number, w: number, h: number } in viewport coords
+export const resumeCardBounds = { current: null }
+
 // Active section — written by App.jsx immediately when a pan starts/ends
 // Sections gate their rAF loops with this to avoid stale bounds / ghost interactions
 export const activeSection = { current: 'landing' }

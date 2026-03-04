@@ -101,7 +101,7 @@ export default function NavMenu({ screen, onNavigate }) {
           return (
             <button
               key={item.id}
-              onClick={() => !isActive && handleNav(item.id)}
+              onClick={(e) => { if (!isActive) { e.stopPropagation(); handleNav(item.id) } }}
               style={{
                 display: 'block',
                 width: '100%',

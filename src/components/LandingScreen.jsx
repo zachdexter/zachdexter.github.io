@@ -18,7 +18,8 @@ const EDGE_HINTS = [
 export default function LandingScreen({ hasMovedShip }) {
   const [title, setTitle]           = useState('')
   const [sub, setSub]               = useState('')
-  const [hintsVisible, setHints]    = useState(false)
+  const [ctrlOpacity, setCtrlOpacity] = useState(0)
+  const [edgeOpacity, setEdgeOpacity] = useState(0)
 
   useEffect(() => {
     let i = 0
@@ -38,13 +39,15 @@ export default function LandingScreen({ hasMovedShip }) {
       }, 35)
     }, 200)
 
-    const t3 = setTimeout(() => setHints(true), 1300)
+    const t3 = setTimeout(() => setCtrlOpacity(1), 1300)
+    const t4 = setTimeout(() => setEdgeOpacity(1), 1700)
 
     return () => {
       clearInterval(t1)
       clearTimeout(t2)
       clearInterval(subInterval)
       clearTimeout(t3)
+      clearTimeout(t4)
     }
   }, [])
 
@@ -88,29 +91,40 @@ export default function LandingScreen({ hasMovedShip }) {
           {sub}
         </div>
 
-        {/* Controls hint — pulse until ship first moves, hidden on mobile, delayed on load */}
-        {!IS_TOUCH && hintsVisible && (
+        {/* Controls hint — always in DOM to reserve space (prevents layout shift); fades in after typewriter */}
+        {/* Outer div owns the fade-in opacity; inner div owns the pulse animation — they multiply correctly */}
+        {!IS_TOUCH && (
           <div
-            className={hasMovedShip ? 'ctrl-hint--passive' : 'ctrl-hint--active'}
             style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '9px',
-              letterSpacing: '3px',
               marginTop: '36px',
+              opacity: ctrlOpacity,
+              transition: 'opacity 0.6s ease',
+              pointerEvents: ctrlOpacity > 0 ? 'auto' : 'none',
             }}
           >
-            ARROWS TO FLY  ·  SPACE TO SHOOT
+            <div
+              className={hasMovedShip ? 'ctrl-hint--passive' : 'ctrl-hint--active'}
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '9px',
+                letterSpacing: '3px',
+              }}
+            >
+              ARROWS TO FLY  ·  SPACE TO SHOOT
+            </div>
           </div>
         )}
       </div>
 
-      {/* Edge directional hints — desktop only, delayed on load */}
-      {!IS_TOUCH && hintsVisible && EDGE_HINTS.map(({ dir, arrow, label, style }) => (
+      {/* Edge directional hints — desktop only, always rendered, staggered fade-in after controls hint */}
+      {!IS_TOUCH && EDGE_HINTS.map(({ dir, arrow, label, style }) => (
         <div
           key={dir}
           style={{
             position: 'absolute', zIndex: 1, pointerEvents: 'none',
             display: 'flex', gap: '7px',
+            opacity: edgeOpacity,
+            transition: 'opacity 0.6s ease',
             ...style,
           }}
         >
