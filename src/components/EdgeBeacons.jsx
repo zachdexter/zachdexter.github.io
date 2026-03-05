@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 
-const IS_TOUCH = typeof window !== 'undefined' && window.matchMedia('(hover: none)').matches
+const IS_TOUCH = typeof window !== 'undefined' && (navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches)
 
 // Edge → section mapping (same as landing exit directions)
 const EDGE_TO_SECTION = { top: 'about', right: 'now', bottom: 'resume', left: 'projects' }

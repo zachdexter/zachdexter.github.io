@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 
-const IS_TOUCH = typeof window !== 'undefined' && window.matchMedia('(hover: none)').matches
+const IS_TOUCH = typeof window !== 'undefined' && (navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches)
 
 const HINT_COLOR  = 'rgba(125, 211, 252, 0.88)'
 const ARROW_COLOR = 'rgba(125, 211, 252, 0.82)'

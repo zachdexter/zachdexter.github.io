@@ -9,7 +9,7 @@ import Now from './sections/Now'
 import Projects from './sections/Projects'
 import { activeSection, dockingState } from './store'
 
-const IS_TOUCH = typeof window !== 'undefined' && window.matchMedia('(hover: none)').matches
+const IS_TOUCH = typeof window !== 'undefined' && (navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches)
 
 // World grid: each cell is 1 viewport wide × 1 viewport tall
 // col/row = scroll position in units of viewport dimensions
@@ -109,15 +109,6 @@ export default function App() {
       activeSection.current = null  // disable all section interactions during pan
       dockingState.current  = null  // undock ship on any navigation
 
-      // Nav fly-in starts immediately as the camera begins moving so both arrive together
-      if (source === 'nav') {
-        wrapRef.current?.({
-          type: 'nav-arrive',
-          from: fromSection,
-          to: dest,
-        })
-      }
-
       const el       = scrollContainerRef.current
       const startX   = el.scrollLeft
       const startY   = el.scrollTop
@@ -137,6 +128,19 @@ export default function App() {
           setCurrentSection(dest)
           isPanningRef.current  = false
           activeSection.current = dest
+
+          // Nav fly-in fires after camera fully settles on destination.
+          // setTimeout gives the browser a few frames to finish painting
+          // the final scroll position before the ship starts appearing.
+          if (source === 'nav') {
+            setTimeout(() => {
+              wrapRef.current?.({
+                type: 'nav-arrive',
+                from: fromSection,
+                to: dest,
+              })
+            }, 100)
+          }
 
           // Edge-exit pan: preserve existing wrap behavior
           if (source === 'ship') {

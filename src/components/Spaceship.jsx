@@ -40,6 +40,12 @@ const NAV_ENTRY_CONFIG = {
     now: 'right',
     resume: 'bottom',
   },
+  landingTarget: {
+    about:    (w, h) => ({ x: w * 0.50, y: h * 0.22 }),  // top entry → upper center
+    now:      (w, h) => ({ x: w * 0.80, y: h * 0.50 }),  // right entry → right side
+    projects: (w, h) => ({ x: w * 0.20, y: h * 0.50 }),  // left entry → left side
+    resume:   (w, h) => ({ x: w * 0.50, y: h * 0.78 }),  // bottom entry → lower center
+  },
 }
 
 const DIR_ANGLE = {
@@ -160,7 +166,7 @@ export default function Spaceship({
     let shipGone       = false
 
     // Nav re-entry animation state
-    const NAV_ENTRY_DURATION_MS = 650  // matches scroll duration so ship lands as camera settles
+    const NAV_ENTRY_DURATION_MS = 800  // fires after camera settles; medium-speed entry
     let navEntryElapsed = 0
     let navEntryActive  = false
     let navEntryThrust  = false
@@ -248,7 +254,8 @@ export default function Spaceship({
           const map = NAV_ENTRY_CONFIG.landingFrom || {}
           const mappedDir = map[fromSection]
           dir = mappedDir || 'right'
-          target = (NAV_ENTRY_CONFIG.about?.target || ((w2, h2) => ({ x: w2 * 0.5, y: h2 * 0.65 })))(w, h)
+          const landingTargetFn = NAV_ENTRY_CONFIG.landingTarget?.[fromSection]
+          target = (landingTargetFn || ((w2, h2) => ({ x: w2 * 0.5, y: h2 * 0.65 })))(w, h)
         } else {
           const cfg = NAV_ENTRY_CONFIG[toSection]
           dir = cfg?.from || 'right'
