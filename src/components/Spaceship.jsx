@@ -425,12 +425,13 @@ export default function Spaceship({
 
       // --- Normal gameplay ---
       const anyInput = keys['ArrowLeft'] || keys['ArrowRight'] || keys['ArrowUp']
+                    || keys['KeyA'] || keys['KeyD'] || keys['KeyW']
 
       if (!shipControlDisabled.current) {
-        if (keys['ArrowLeft'])  ship.angle -= TURN_SPEED * dtScale
-        if (keys['ArrowRight']) ship.angle += TURN_SPEED * dtScale
+        if (keys['ArrowLeft']  || keys['KeyA']) ship.angle -= TURN_SPEED * dtScale
+        if (keys['ArrowRight'] || keys['KeyD']) ship.angle += TURN_SPEED * dtScale
 
-        const thrusting = !!keys['ArrowUp']
+        const thrusting = !!(keys['ArrowUp'] || keys['KeyW'])
         if (thrusting) {
           ship.vx += Math.sin(ship.angle) * THRUST * dtScale
           ship.vy -= Math.cos(ship.angle) * THRUST * dtScale
@@ -439,7 +440,7 @@ export default function Spaceship({
         }
       }
 
-      const thrusting = !!keys['ArrowUp'] && !shipControlDisabled.current
+      const thrusting = !!(keys['ArrowUp'] || keys['KeyW']) && !shipControlDisabled.current
 
       // Drag: Math.pow(DRAG, dtScale) gives the same per-second decay on any refresh rate
       const dragFactor = Math.pow(DRAG, dtScale)

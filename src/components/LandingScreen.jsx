@@ -110,7 +110,7 @@ export default function LandingScreen({ hasMovedShip }) {
                 letterSpacing: '3px',
               }}
             >
-              ARROWS TO FLY  ·  SPACE TO SHOOT
+              WASD / ARROWS TO FLY  ·  SPACE TO SHOOT
             </div>
           </div>
         )}
