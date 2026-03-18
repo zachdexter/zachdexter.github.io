@@ -32,10 +32,10 @@ export const LATELY_DATA = {
     { src: './assets/lately/photo3.JPG',  caption: 'Hello Sydney!', date: '01/02/26', location: 'Sydney, Australia' },
   ],
   game: {
-    title:       'Nothing rn :( ',
-    platform:    null,
+    title:       'Sanabi',
+    platform:    'PC',
     status:      'Currently Playing',
-    image:       null,  // e.g. '/assets/lately/game.jpg'
-    description: 'Haven\'t been playing anything recently although I\'ve been looking for a good game to get into.',
+    image:       '/assets/lately/game.png',  // e.g. '/assets/lately/game.jpg'
+    description: 'Recently found this cool indie game on steam, movement mechanics are really fun and the story is great. Highly recommend checking it out!',
   },
 }

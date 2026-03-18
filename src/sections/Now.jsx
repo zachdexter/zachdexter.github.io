@@ -328,7 +328,7 @@ function GamePanel() {
       <ImageSlot src={d.image} alt="game cover" width={64} height={64} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="now-panel__title">{d.title}</div>
-        {/* <div className="now-panel__sub">PLATFORM: {d.platform}</div> */}
+        <div className="now-panel__sub">PLATFORM: {d.platform}</div>
         {/* <div className="now-panel__status">STATUS: {d.status.toUpperCase()}</div> */}
       </div>
     </div>
