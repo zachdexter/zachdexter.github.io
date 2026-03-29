@@ -12,18 +12,18 @@ export const LATELY_DATA = {
     description: '',
   },
   tv: {
-    title:       'The Rookie',
+    title:       'Invincible',
     type:        'TV Show',
-    status:      'Currently Watching',
+    // status:      'Currently Watching',
     image:       './assets/lately/tv.png',  // e.g. '/assets/lately/tv.jpg'
-    description: 'Been keeping up with this show for a while, love that episodes are back to coming out weekly.',
+    description: 'Episodes coming out weekly again! Been looking forward to this season for awhile now.',
   },
   book: {
-    title:       'Run',
-    author:      'Blake Crouch',
+    title:       'Invincible',
+    author:      'Robert Kirkman',
     // progress:    35,   // percentage 0–100
     image:       './assets/lately/book.png',  // e.g. '/assets/lately/book.jpg'
-    description: 'Recently finished "Dark Matter" by the same author, really loved it so trying out another one of his titles, so far pretty good!',
+    description: 'Started reading the comics on my phone since I had some really long flights to occupy myself for. Watched the show before starting the comics, now I\'m past where the show is in the verse.',
   },
   photos: [
     { src: './assets/lately/photo4.JPG',  caption: 'Girlfriend recently came to visit for a week! This picture is from us climbing the Sydney Harbour Bridge, would highly recommend doing this if you\'re ever in Sydney.', date: '03/10/26', location: 'Sydney, Australia' },
