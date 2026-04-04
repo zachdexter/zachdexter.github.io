@@ -13,6 +13,11 @@ const PHOTO_DATE_OVERRIDES = {
   'meBenOutdoor.JPG': 'Oct 2025',
   'meOutdoorActionshot5.jpg': 'Nov 2025',
   'meNZBridge.jpg': 'Feb 2026',
+  'nam_bike.jpg': 'March 2026',
+  'nam_boat.jpeg': 'March 2026',
+  'nam_bridge.jpeg': 'March 2026',
+  'nam_water_temple.jpeg': 'March 2026',
+  'nam_stair_temple.jpeg': 'March 2026',
 }
 // ──────────────────────────────────────────────────────────────────
 
@@ -39,6 +44,11 @@ const PHOTO_POOL = [
   '/assets/about/meGeorgeBondiCliff.png',
   '/assets/about/meOutdoorActionshot5.jpg',
   '/assets/about/meBenOutdoor3.jpg',
+  '/assets/about/nam_bike.jpg',
+  '/assets/about/nam_bridge.jpeg',
+  '/assets/about/nam_stair_temple.jpeg',
+  '/assets/about/nam_water_temple.jpeg',
+  '/assets/about/nam_boat.jpeg',
 ]
 
 const SLOT_COUNT = 7

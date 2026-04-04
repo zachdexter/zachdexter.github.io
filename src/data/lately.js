@@ -26,10 +26,10 @@ export const LATELY_DATA = {
     description: 'Started reading the comics on my phone since I had some really long flights to occupy myself for. Watched the show before starting the comics, now I\'m past where the show is in the verse.',
   },
   photos: [
+    { src: './assets/lately/photo3.jpeg',  caption: 'Recent trip to Vietnam. This picture is from Hang Mua where I climbed up ~500 steps for this crazy view.', date: '03/22/26', location: 'Ninh Binh, Vietnam' },
     { src: './assets/lately/photo4.JPG',  caption: 'Girlfriend recently came to visit for a week! This picture is from us climbing the Sydney Harbour Bridge, would highly recommend doing this if you\'re ever in Sydney.', date: '03/10/26', location: 'Sydney, Australia' },
     { src: './assets/lately/photo1.jpeg', caption: 'Recent trip with some friends to New Zealand! The landscape everywhere was beautiful, felt like I was living in a Windows homescreen.', date: '02/01/26', location: 'Queenstown, New Zealand' },
     { src: './assets/lately/photo2.jpeg', caption: 'Australia Day in Sydney! Picture is from the harbor just outside of the Opera House, pretty cool light show and fireworks.', date: '01/26/26', location: 'Sydney, Australia' },
-    { src: './assets/lately/photo3.JPG',  caption: 'Hello Sydney!', date: '01/02/26', location: 'Sydney, Australia' },
   ],
   game: {
     title:       'Sanabi',
