@@ -9,7 +9,7 @@ import Now from './sections/Now'
 import Projects from './sections/Projects'
 import { activeSection, dockingState } from './store'
 
-const IS_TOUCH = typeof window !== 'undefined' && (navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches)
+const IS_TOUCH = typeof window !== 'undefined' && !window.matchMedia('(any-hover: hover)').matches && navigator.maxTouchPoints > 0
 
 // World grid: each cell is 1 viewport wide × 1 viewport tall
 // col/row = scroll position in units of viewport dimensions

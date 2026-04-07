@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 
-const IS_TOUCH = typeof window !== 'undefined' && (navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches)
+const IS_TOUCH = typeof window !== 'undefined' && !window.matchMedia('(any-hover: hover)').matches && navigator.maxTouchPoints > 0
 
 const NAV_ITEMS = [
   { id: 'landing', label: 'HOME' },

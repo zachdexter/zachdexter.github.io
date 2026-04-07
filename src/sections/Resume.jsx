@@ -68,7 +68,7 @@ export default function Resume() {
           e.currentTarget.style.boxShadow = '0 0 20px rgba(100,155,240,0.20)'
         }}
       >
-        VIEW MISSION BRIEF
+        VIEW RESUME
       </a>
       <p style={{
         marginTop: '10px',

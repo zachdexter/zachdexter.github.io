@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+
+const IS_TOUCH = typeof window !== 'undefined' && !window.matchMedia('(any-hover: hover)').matches && navigator.maxTouchPoints > 0
 import { shipPosition, satelliteBounds, satelliteHitHandler, dockingState, activeSection, monitorBounds } from '../store'
 
 // ─── Project data ─────────────────────────────────────────────────────────────
@@ -736,7 +738,7 @@ export default function Projects() {
         letterSpacing: '2.5px', color: 'rgba(125,211,252,0.30)',
         textTransform: 'uppercase', pointerEvents: 'none', userSelect: 'none',
       }}>
-        {window.innerWidth < 768 ? '◎ TAP SATELLITES TO VIEW PROJECTS' : '◎ FLY CLOSE TO DOCK · CLICK TO VIEW'}
+        {IS_TOUCH ? '◎ TAP SATELLITES TO VIEW PROJECTS' : '◎ FLY CLOSE TO DOCK · CLICK TO VIEW'}
       </div>
 
       {selectedProject && selectedCfg && (

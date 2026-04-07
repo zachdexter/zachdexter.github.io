@@ -23,7 +23,7 @@ export const LATELY_DATA = {
     author:      'Robert Kirkman',
     // progress:    35,   // percentage 0–100
     image:       './assets/lately/book.png',  // e.g. '/assets/lately/book.jpg'
-    description: 'Started reading the comics on my phone since I had some really long flights to occupy myself for. Watched the show before starting the comics, now I\'m past where the show is in the verse.',
+    description: 'Got super into the comics over the last month when I had nothing else to read on some long flights, just finished all 144 main issues, thinking about reading the Tech Jacket series next.',
   },
   photos: [
     { src: './assets/lately/photo3.jpeg',  caption: 'Recent trip to Vietnam. This picture is from Hang Mua where I climbed up ~500 steps for this crazy view.', date: '03/22/26', location: 'Ninh Binh, Vietnam' },
