@@ -9,7 +9,20 @@ const OWNER = 'zachdexter'
 const REPO = 'zachdexter.github.io'
 const BRANCH = 'content'
 const API_BASE = `https://api.github.com/repos/${OWNER}/${REPO}/contents`
-const RAW_BASE = `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}`
+const RAW_BASE = `https://cdn.jsdelivr.net/gh/${OWNER}/${REPO}@${BRANCH}`
+const PURGE_BASE = `https://purge.jsdelivr.net/gh/${OWNER}/${REPO}@${BRANCH}`
+
+// jsDelivr caches aggressively; tell it to drop its cached copy right after we
+// commit a change so the live site (which reads from jsDelivr) picks it up in
+// seconds instead of waiting out the cache TTL. Best-effort — a failed purge
+// just means the CDN catches up on its own schedule instead of instantly.
+async function purgeJsdelivr(path) {
+  try {
+    await fetch(`${PURGE_BASE}/${path}`, { cache: 'no-store' })
+  } catch {
+    // ignore
+  }
+}
 
 const TOKEN_KEY = 'admin_gh_pat'
 
@@ -28,7 +41,7 @@ function authHeaders(extra = {}) {
 }
 
 async function ghGetFile(path) {
-  const res = await fetch(`${API_BASE}/${path}?ref=${BRANCH}`, { headers: authHeaders() })
+  const res = await fetch(`${API_BASE}/${path}?ref=${BRANCH}`, { headers: authHeaders(), cache: 'no-store' })
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`GET ${path} failed: ${res.status}`)
   return res.json()
@@ -96,6 +109,62 @@ function sanitizeFilename(name) {
   return `${base}-${Date.now()}.jpg`
 }
 
+// Builds a thumbnail + "Change image" upload control. `target` is the object
+// (e.g. latelyData.tv, or a photos[] entry) that gets `.image` set to the new
+// filename immediately, plus transient `_pendingFile`/`_previewUrl` for saveLately().
+function buildImageUploadControl(target, category, onChange) {
+  const wrap = document.createElement('div')
+  wrap.className = 'image-upload'
+
+  const img = document.createElement('img')
+  img.alt = ''
+  const src = target._previewUrl || (target.image ? `${RAW_BASE}/images/${category}/${target.image}` : '')
+  if (src) img.src = src
+  wrap.appendChild(img)
+
+  const label = document.createElement('label')
+  label.className = 'upload-btn small'
+  label.textContent = target.image || target._previewUrl ? 'Change image' : 'Upload image'
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'image/*'
+  input.hidden = true
+  input.addEventListener('change', (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    target.image = sanitizeFilename(file.name)
+    target._pendingFile = file
+    target._previewUrl = URL.createObjectURL(file)
+    onChange?.()
+  })
+  label.appendChild(input)
+  wrap.appendChild(label)
+
+  if (target.image || target._previewUrl) {
+    const removeBtn = document.createElement('button')
+    removeBtn.type = 'button'
+    removeBtn.className = 'upload-btn small remove-image-btn'
+    removeBtn.textContent = 'Remove (use placeholder)'
+    removeBtn.addEventListener('click', () => {
+      target.image = null
+      delete target._pendingFile
+      delete target._previewUrl
+      onChange?.()
+    })
+    wrap.appendChild(removeBtn)
+  }
+
+  return wrap
+}
+
+function stripTransient(obj) {
+  const out = {}
+  for (const key of Object.keys(obj)) {
+    if (!key.startsWith('_')) out[key] = obj[key]
+  }
+  return out
+}
+
 // ── Screen switching ─────────────────────────────────────────────────────────
 
 function show(id) {
@@ -128,7 +197,7 @@ function renderAbout() {
     card.innerHTML = `
       <img src="${imgSrc}" alt="" />
       <div class="fields">
-        <input type="text" class="caption-input" placeholder="Caption" value="${entry.caption || ''}" />
+        <textarea class="caption-input" placeholder="Caption">${entry.caption || ''}</textarea>
         <input type="text" class="date-input" placeholder="Date (e.g. Feb 2026)" value="${entry.date || ''}" />
         <div class="filename">${entry.filename}</div>
         <button type="button" class="remove-btn">${entry.markedDelete ? 'Undo delete' : 'Delete'}</button>
@@ -172,6 +241,7 @@ async function saveAbout() {
       if (entry.isNew && entry.file) {
         const base64 = await resizeImageToBase64(entry.file)
         await ghPutFile(`images/about/${entry.filename}`, base64, null, `admin: add photo ${entry.filename}`)
+        await purgeJsdelivr(`images/about/${entry.filename}`)
       }
     }
     // Delete removed images
@@ -179,6 +249,7 @@ async function saveAbout() {
       const existing = await ghGetFile(`images/about/${entry.filename}`)
       if (existing) {
         await ghDeleteFile(`images/about/${entry.filename}`, existing.sha, `admin: delete photo ${entry.filename}`)
+        await purgeJsdelivr(`images/about/${entry.filename}`)
       }
     }
     // Build final entry list (drop deleted, drop admin-only fields)
@@ -193,6 +264,7 @@ async function saveAbout() {
       jsonFile ? jsonFile.sha : null,
       'admin: update about photos'
     )
+    await purgeJsdelivr('about.json')
 
     setStatus(statusEl, 'Saved ✓', 'ok')
     await loadAbout()
@@ -236,7 +308,7 @@ function renderLately() {
   tvSection.innerHTML = '<h2>TV</h2>'
   tvSection.appendChild(fieldRow('Title', latelyData.tv?.title, v => latelyData.tv.title = v))
   tvSection.appendChild(fieldRow('Type', latelyData.tv?.type, v => latelyData.tv.type = v))
-  tvSection.appendChild(fieldRow('Image filename', latelyData.tv?.image, v => latelyData.tv.image = v))
+  tvSection.appendChild(buildImageUploadControl(latelyData.tv, 'lately', renderLately))
   tvSection.appendChild(fieldRow('Description', latelyData.tv?.description, v => latelyData.tv.description = v))
   root.appendChild(tvSection)
 
@@ -245,7 +317,7 @@ function renderLately() {
   bookSection.innerHTML = '<h2>Book</h2>'
   bookSection.appendChild(fieldRow('Title', latelyData.book?.title, v => latelyData.book.title = v))
   bookSection.appendChild(fieldRow('Author', latelyData.book?.author, v => latelyData.book.author = v))
-  bookSection.appendChild(fieldRow('Image filename', latelyData.book?.image, v => latelyData.book.image = v))
+  bookSection.appendChild(buildImageUploadControl(latelyData.book, 'lately', renderLately))
   bookSection.appendChild(fieldRow('Description', latelyData.book?.description, v => latelyData.book.description = v))
   root.appendChild(bookSection)
 
@@ -255,7 +327,7 @@ function renderLately() {
   gameSection.appendChild(fieldRow('Title', latelyData.game?.title, v => latelyData.game.title = v))
   gameSection.appendChild(fieldRow('Platform', latelyData.game?.platform, v => latelyData.game.platform = v))
   gameSection.appendChild(fieldRow('Status', latelyData.game?.status, v => latelyData.game.status = v))
-  gameSection.appendChild(fieldRow('Image filename', latelyData.game?.image, v => latelyData.game.image = v))
+  gameSection.appendChild(buildImageUploadControl(latelyData.game, 'lately', renderLately))
   gameSection.appendChild(fieldRow('Description', latelyData.game?.description, v => latelyData.game.description = v))
   root.appendChild(gameSection)
 
@@ -278,21 +350,33 @@ function renderLately() {
   latelyData.photos.forEach((p, i) => {
     const row = document.createElement('div')
     row.className = 'lately-photo-row'
-    const preview = p.image ? `${RAW_BASE}/images/lately/${p.image}` : ''
-    row.innerHTML = `
-      <img src="${preview}" alt="" />
-      <input type="text" placeholder="image filename" value="${p.image || ''}" data-field="image" />
-      <input type="text" placeholder="caption" value="${p.caption || ''}" data-field="caption" />
+
+    const top = document.createElement('div')
+    top.className = 'row-top'
+    top.appendChild(buildImageUploadControl(p, 'lately', renderLately))
+
+    const fields = document.createElement('div')
+    fields.className = 'row-fields'
+    fields.innerHTML = `
+      <textarea placeholder="caption" data-field="caption">${p.caption || ''}</textarea>
       <input type="text" placeholder="location" value="${p.location || ''}" data-field="location" />
-      <button type="button" class="remove-btn">Remove</button>
     `
-    row.querySelectorAll('input').forEach(inp => {
+    fields.querySelectorAll('input, textarea').forEach(inp => {
       inp.addEventListener('input', (e) => { p[e.target.dataset.field] = e.target.value })
     })
-    row.querySelector('.remove-btn').addEventListener('click', () => {
+    top.appendChild(fields)
+    row.appendChild(top)
+
+    const removeBtn = document.createElement('button')
+    removeBtn.type = 'button'
+    removeBtn.className = 'remove-btn'
+    removeBtn.textContent = 'Remove photo'
+    removeBtn.addEventListener('click', () => {
       latelyData.photos.splice(i, 1)
       renderLately()
     })
+    row.appendChild(removeBtn)
+
     photosList.appendChild(row)
   })
 }
@@ -303,13 +387,39 @@ async function saveLately() {
   btn.disabled = true
   setStatus(statusEl, 'Saving…')
   try {
+    // Upload any newly chosen images
+    const pendingTargets = [latelyData.tv, latelyData.book, latelyData.game, ...latelyData.photos]
+    for (const target of pendingTargets) {
+      if (target?._pendingFile) {
+        const base64 = await resizeImageToBase64(target._pendingFile)
+        await ghPutFile(`images/lately/${target.image}`, base64, null, `admin: update lately image ${target.image}`)
+        await purgeJsdelivr(`images/lately/${target.image}`)
+      }
+    }
+
+    const payload = {
+      cassette: latelyData.cassette,
+      tv: stripTransient(latelyData.tv),
+      book: stripTransient(latelyData.book),
+      game: stripTransient(latelyData.game),
+      photos: latelyData.photos.map(stripTransient),
+    }
+
     const jsonFile = await ghGetFile('lately.json')
     await ghPutFile(
       'lately.json',
-      utf8ToBase64(JSON.stringify(latelyData, null, 2)),
+      utf8ToBase64(JSON.stringify(payload, null, 2)),
       jsonFile ? jsonFile.sha : null,
       'admin: update lately content'
     )
+    await purgeJsdelivr('lately.json')
+
+    // Drop transient upload state now that it's been committed
+    delete latelyData.tv?._pendingFile; delete latelyData.tv?._previewUrl
+    delete latelyData.book?._pendingFile; delete latelyData.book?._previewUrl
+    delete latelyData.game?._pendingFile; delete latelyData.game?._previewUrl
+    latelyData.photos.forEach(p => { delete p._pendingFile; delete p._previewUrl })
+
     setStatus(statusEl, 'Saved ✓', 'ok')
   } catch (err) {
     console.error(err)
@@ -333,7 +443,10 @@ function initTabs() {
   })
 }
 
-async function initApp() {
+let appWired = false
+function wireApp() {
+  if (appWired) return
+  appWired = true
   initTabs()
   document.getElementById('about-file-input').addEventListener('change', (e) => handleAboutFiles(e.target.files))
   document.getElementById('save-about-btn').addEventListener('click', saveAbout)
@@ -342,12 +455,20 @@ async function initApp() {
     localStorage.removeItem(TOKEN_KEY)
     location.reload()
   })
-  show('app')
+}
+
+async function initApp() {
+  wireApp()
   try {
     await Promise.all([loadAbout(), loadLately()])
+    show('app')
   } catch (err) {
     console.error(err)
-    alert(`Failed to load content — check your token has Contents read/write access to this repo.\n\n${err.message}`)
+    localStorage.removeItem(TOKEN_KEY)
+    token = null
+    document.getElementById('token-error').textContent =
+      `Couldn't load content — check the token is valid and has Contents read/write access to this repo. (${err.message})`
+    show('token-screen')
   }
 }
 
