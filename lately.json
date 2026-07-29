@@ -7,10 +7,10 @@
     "description": ""
   },
   "tv": {
-    "title": "Invincible",
+    "title": "Solo Leveling",
     "type": "TV Show",
-    "image": "tv.png",
-    "description": "Episodes coming out weekly again! Been looking forward to this season for awhile now."
+    "image": "sololeveling-1785353086146.jpg",
+    "description": "Slowly watching through this with gf, pretty mid but it's good to watch while eating."
   },
   "book": {
     "title": "Invincible",
@@ -18,17 +18,37 @@
     "image": "book.png",
     "description": "Got super into the comics over the last month when I had nothing else to read on some long flights, just finished all 144 main issues, thinking about reading the Tech Jacket series next."
   },
-  "photos": [
-    { "image": "photo3.jpeg", "caption": "Recent trip to Vietnam. This picture is from Hang Mua where I climbed up ~500 steps for this crazy view.", "date": "03/22/26", "location": "Ninh Binh, Vietnam" },
-    { "image": "photo4.JPG", "caption": "Girlfriend recently came to visit for a week! This picture is from us climbing the Sydney Harbour Bridge, would highly recommend doing this if you're ever in Sydney.", "date": "03/10/26", "location": "Sydney, Australia" },
-    { "image": "photo1.jpeg", "caption": "Recent trip with some friends to New Zealand! The landscape everywhere was beautiful, felt like I was living in a Windows homescreen.", "date": "02/01/26", "location": "Queenstown, New Zealand" },
-    { "image": "photo2.jpeg", "caption": "Australia Day in Sydney! Picture is from the harbor just outside of the Opera House, pretty cool light show and fireworks.", "date": "01/26/26", "location": "Sydney, Australia" }
-  ],
   "game": {
     "title": "Sanabi",
     "platform": "PC",
     "status": "Currently Playing",
     "image": "game.png",
     "description": "Recently found this cool indie game on steam, movement mechanics are really fun and the story is great. Highly recommend checking it out!"
-  }
+  },
+  "photos": [
+    {
+      "image": "photo3.jpeg",
+      "caption": "Recent trip to Vietnam. This picture is from Hang Mua where I climbed up ~500 steps for this crazy view.",
+      "date": "03/22/26",
+      "location": "Ninh Binh, Vietnam"
+    },
+    {
+      "image": "photo4.JPG",
+      "caption": "Girlfriend recently came to visit for a week! This picture is from us climbing the Sydney Harbour Bridge, would highly recommend doing this if you're ever in Sydney.",
+      "date": "03/10/26",
+      "location": "Sydney, Australia"
+    },
+    {
+      "image": "photo1.jpeg",
+      "caption": "Recent trip with some friends to New Zealand! The landscape everywhere was beautiful, felt like I was living in a Windows homescreen.",
+      "date": "02/01/26",
+      "location": "Queenstown, New Zealand"
+    },
+    {
+      "image": "photo2.jpeg",
+      "caption": "Australia Day in Sydney! Picture is from the harbor just outside of the Opera House, pretty cool light show and fireworks.",
+      "date": "01/26/26",
+      "location": "Sydney, Australia"
+    }
+  ]
 }
