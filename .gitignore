@@ -4,6 +4,9 @@ node_modules/
 # Build output
 dist/
 
+# env
+.env
+
 # Local env overrides (never commit)
 .env.local
 .env.*.local
