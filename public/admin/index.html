@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Admin — zacharydexter.com</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <div id="gate" class="screen">
+    <form id="password-form" class="card">
+      <h1>Admin</h1>
+      <p class="hint">Enter the admin password to continue.</p>
+      <input id="password-input" type="password" placeholder="Password" autocomplete="current-password" />
+      <button type="submit">Continue</button>
+      <p id="gate-error" class="error"></p>
+    </form>
+  </div>
+
+  <div id="token-screen" class="screen hidden">
+    <form id="token-form" class="card">
+      <h1>GitHub Token</h1>
+      <p class="hint">
+        Paste a fine-grained GitHub Personal Access Token scoped to just this repo
+        (<code>zachdexter/zachdexter.github.io</code>) with read/write access to <b>Contents</b>.
+        It's stored only in this browser's local storage.
+      </p>
+      <input id="token-input" type="password" placeholder="github_pat_..." autocomplete="off" />
+      <button type="submit">Save token</button>
+      <p id="token-error" class="error"></p>
+    </form>
+  </div>
+
+  <div id="app" class="screen hidden">
+    <header class="app-header">
+      <h1>Site Admin</h1>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="about">About Photos</button>
+        <button class="tab-btn" data-tab="lately">Lately</button>
+      </div>
+      <button id="logout-btn" class="link-btn">Forget token</button>
+    </header>
+
+    <main id="about-tab" class="tab-panel">
+      <div class="panel-toolbar">
+        <label class="upload-btn">
+          + Add photo(s)
+          <input id="about-file-input" type="file" accept="image/*" multiple hidden />
+        </label>
+        <button id="save-about-btn" class="save-btn">Save About Photos</button>
+        <span id="about-status" class="status"></span>
+      </div>
+      <div id="about-grid" class="photo-grid"></div>
+    </main>
+
+    <main id="lately-tab" class="tab-panel hidden">
+      <div class="panel-toolbar">
+        <button id="save-lately-btn" class="save-btn">Save Lately</button>
+        <span id="lately-status" class="status"></span>
+      </div>
+      <div id="lately-form"></div>
+    </main>
+  </div>
+
+  <script src="admin.js" defer></script>
+</body>
+</html>

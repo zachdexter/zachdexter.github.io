@@ -1,55 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { polaroidBounds, polaroidHitHandler, shipControlDisabled, monitorBounds, activeSection } from '../store'
-
-// ── EDIT PHOTO DATES HERE ──────────────────────────────────────────
-const PHOTO_DATE_OVERRIDES = {
-  'meLuge.png': 'Feb 2026',
-  'meGeorgeBondiCliff.png': 'Jan 2026',
-  'meDrivingNZ.jpg': 'Feb 2026',
-  'meGeorgeNZPier.jpg': 'Feb 2026', 
-  'meBenOutdoor3.jpg': 'Oct 2025',
-  'meBenOutdoor2.JPG': 'Oct 2025',
-  'meBenOutdoor.JPG': 'Oct 2025',
-  'meOutdoorActionshot5.jpg': 'Nov 2025',
-  'meNZBridge.jpg': 'Feb 2026',
-  'nam_bike.jpg': 'March 2026',
-  'nam_boat.jpeg': 'March 2026',
-  'nam_bridge.jpeg': 'March 2026',
-  'nam_water_temple.jpeg': 'March 2026',
-  'nam_stair_temple.jpeg': 'March 2026',
-}
-// ──────────────────────────────────────────────────────────────────
-
-const PHOTO_POOL = [
-  '/assets/about/gwccOutdoorSmallGroupPic2.jpg',
-  '/assets/about/gwccOutdoorTopDownShot.jpg',
-  '/assets/about/meBenOutdoor.JPG',
-  '/assets/about/gwccOutdoorSmallGroupPic.JPG',
-  '/assets/about/gwccGroupHikingWithCrashpads.jpg',
-  '/assets/about/meBenOutdoor2.JPG',
-  '/assets/about/meLayingOnCrashpadOutdoor.JPG',
-  '/assets/about/meOutdoorActionShot2.JPG',
-  '/assets/about/meOutdoorActionShot3.JPG',
-  '/assets/about/meOutdoorActionShot4.JPG',
-  '/assets/about/meOutdoorMushroomHat.JPG',
-  '/assets/about/meOutdoorActionShot1.JPG',
-  '/assets/about/meClimbingIndoors.jpeg',
-  '/assets/about/gwccGroupPictureOutside.jpeg',
-  '/assets/about/meHiking.JPEG',
-  '/assets/about/meDrivingNZ.jpg',
-  '/assets/about/meNZBridge.jpg',
-  '/assets/about/meGeorgeNZPier.jpg',
-  '/assets/about/meLuge.png',
-  '/assets/about/meGeorgeBondiCliff.png',
-  '/assets/about/meOutdoorActionshot5.jpg',
-  '/assets/about/meBenOutdoor3.jpg',
-  '/assets/about/nam_bike.jpg',
-  '/assets/about/nam_bridge.jpeg',
-  '/assets/about/nam_stair_temple.jpeg',
-  '/assets/about/nam_water_temple.jpeg',
-  '/assets/about/nam_boat.jpeg',
-]
+import { fetchContentJson, contentImageUrl } from '../lib/contentClient'
 
 const SLOT_COUNT = 7
 
@@ -189,17 +141,6 @@ function findNonOverlappingBase(region, mb, existingParams, exclusionZones) {
     phaseY: Math.random() * Math.PI * 2,
     rotation: -7 + Math.random() * 14,
   }
-}
-
-function getFilename(src) {
-  return src.split('/').pop()
-}
-
-function formatExifDate(d) {
-  if (!d) return null
-  const date = d instanceof Date ? d : new Date(d)
-  if (isNaN(date.getTime())) return null
-  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
 }
 
 // ─── CRT Monitor ─────────────────────────────────────────────────────────────
@@ -383,12 +324,12 @@ function CRTMonitor({ monitorRef, isActive }) {
 }
 
 // ─── Polaroid layer ───────────────────────────────────────────────────────────
-function PolaroidLayer({ onEnlargeRequest, monitorRef, isActive, isMobile, onFirstShot }) {
+function PolaroidLayer({ photoPool, onEnlargeRequest, monitorRef, isActive, isMobile, onFirstShot }) {
   const initSlotsRef  = useRef(null)
   const physicsRef    = useRef({})
 
   const [slots, setSlots] = useState(() => {
-    const pool = shuffle(PHOTO_POOL)
+    const pool = shuffle(photoPool)
     const mb = getApproxMonitorBounds()
     const vw = window.innerWidth, vh = window.innerHeight
     const shipLandX = vw / 2 - POLAROID_W / 2
@@ -409,7 +350,7 @@ function PolaroidLayer({ onEnlargeRequest, monitorRef, isActive, isMobile, onFir
       const speed = 1 + Math.random() * 20
       const angle = Math.random() * Math.PI * 2
       physicsRef.current[id] = { px: dp.baseX, py: dp.baseY, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed }
-      return { id, src: pool[i % pool.length], opacity: 0, rotation: dp.rotation,
+      return { id, photo: pool[i % pool.length], opacity: 0, rotation: dp.rotation,
                fadeDelay: 300 + Math.random() * 3800 }
     })
     initSlotsRef.current = result
@@ -566,10 +507,10 @@ function PolaroidLayer({ onEnlargeRequest, monitorRef, isActive, isMobile, onFir
     const timeout = setTimeout(() => {
       delete pendingSwaps.current[id]
       setSlots(prev => {
-        const used = new Set(prev.filter(s => s.id !== id).map(s => s.src))
-        const available = PHOTO_POOL.filter(p => !used.has(p))
-        const pool = available.length > 0 ? available : PHOTO_POOL
-        const newSrc = pool[Math.floor(Math.random() * pool.length)]
+        const used = new Set(prev.filter(s => s.id !== id).map(s => s.photo.src))
+        const available = photoPool.filter(p => !used.has(p.src))
+        const pool = available.length > 0 ? available : photoPool
+        const newPhoto = pool[Math.floor(Math.random() * pool.length)]
         const mb = monitorBoundsRef.current || getApproxMonitorBounds()
         const currentParams = prev
           .filter(s => s.id !== id && s.opacity > 0)
@@ -584,13 +525,13 @@ function PolaroidLayer({ onEnlargeRequest, monitorRef, isActive, isMobile, onFir
         const angle = Math.random() * Math.PI * 2
         physicsRef.current[id] = { px: dp.baseX, py: dp.baseY, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed }
         return prev.map(s => s.id === id
-          ? { ...s, src: newSrc, opacity: 1, rotation: -7 + Math.random() * 14 }
+          ? { ...s, photo: newPhoto, opacity: 1, rotation: -7 + Math.random() * 14 }
           : s
         )
       })
     }, 1000)
     pendingSwaps.current[id] = timeout
-  }, [])
+  }, [photoPool])
 
   useEffect(() => {
     polaroidHitHandler.current = handleHit
@@ -610,7 +551,7 @@ function PolaroidLayer({ onEnlargeRequest, monitorRef, isActive, isMobile, onFir
             key={slot.id}
             ref={el => { elemRefs.current[i] = el }}
             className="polaroid"
-            onClick={() => slot.opacity > 0 && onEnlargeRequest(slot.src)}
+            onClick={() => slot.opacity > 0 && onEnlargeRequest(slot.photo)}
             style={{
               opacity: slot.opacity,
               transform: `translate(${initP.px}px, ${initP.py}px) rotate(${slot.rotation}deg)`,
@@ -619,8 +560,8 @@ function PolaroidLayer({ onEnlargeRequest, monitorRef, isActive, isMobile, onFir
               transition: 'opacity 2.5s ease',
             }}
           >
-            <img src={slot.src} alt="adventure photo" draggable={false} />
-            <div className="polaroid-caption">⛰</div>
+            <img src={slot.photo.src} alt="adventure photo" draggable={false} />
+            <div className="polaroid-caption">{slot.photo.caption || '⛰'}</div>
           </div>
         )
       })}
@@ -629,9 +570,8 @@ function PolaroidLayer({ onEnlargeRequest, monitorRef, isActive, isMobile, onFir
 }
 
 // ─── Enlarged polaroid overlay ────────────────────────────────────────────────
-function EnlargedOverlay({ src, onClose, exifDates }) {
-  const filename = getFilename(src)
-  const dateLabel = exifDates[src] || PHOTO_DATE_OVERRIDES[filename] || null
+function EnlargedOverlay({ photo, onClose }) {
+  const { src, caption, date } = photo
 
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose() }
@@ -673,18 +613,18 @@ function EnlargedOverlay({ src, onClose, exifDates }) {
           draggable={false}
           style={{ width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'cover', display: 'block' }}
         />
-        {dateLabel && (
-          <p style={{
+        {(caption || date) && (
+          <div style={{
             position: 'absolute',
             bottom: 16,
             left: 20,
+            right: 20,
             fontFamily: 'Courier New, monospace',
-            fontSize: '11px',
             color: 'rgba(80,60,40,0.65)',
-            letterSpacing: '0.5px',
           }}>
-            {dateLabel}
-          </p>
+            {caption && <p style={{ fontSize: '12px', margin: 0 }}>{caption}</p>}
+            {date && <p style={{ fontSize: '11px', letterSpacing: '0.5px', margin: caption ? '2px 0 0' : 0 }}>{date}</p>}
+          </div>
         )}
         <button
           onClick={onClose}
@@ -718,14 +658,14 @@ function EnlargedOverlay({ src, onClose, exifDates }) {
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 export default function About({ isActive }) {
-  const [enlargedSrc, setEnlargedSrc] = useState(null)
-  const [exifDates, setExifDates] = useState({})
+  const [enlargedPhoto, setEnlargedPhoto] = useState(null)
   const [hasShot, setHasShot] = useState(false)
+  const [photoPool, setPhotoPool] = useState(null)
   const monitorRef = useRef(null)
 
   useEffect(() => {
-    shipControlDisabled.current = !!enlargedSrc
-  }, [enlargedSrc])
+    shipControlDisabled.current = !!enlargedPhoto
+  }, [enlargedPhoto])
 
   useEffect(() => {
     return () => { shipControlDisabled.current = false }
@@ -733,30 +673,16 @@ export default function About({ isActive }) {
 
   useEffect(() => {
     let cancelled = false
-    const loadDates = async () => {
-      try {
-        const exifr = (await import('exifr')).default
-        const entries = await Promise.all(
-          PHOTO_POOL.map(async src => {
-            try {
-              const data = await exifr.parse(src, ['DateTimeOriginal'])
-              const date = data?.DateTimeOriginal
-              return [src, formatExifDate(date)]
-            } catch {
-              return [src, null]
-            }
-          })
-        )
-        if (!cancelled) {
-          const map = {}
-          entries.forEach(([src, date]) => { if (date) map[src] = date })
-          setExifDates(map)
-        }
-      } catch {
-        // exifr not available
-      }
-    }
-    loadDates()
+    fetchContentJson('about.json')
+      .then(entries => {
+        if (cancelled) return
+        setPhotoPool(entries.map(e => ({
+          src: contentImageUrl('about', e.filename),
+          caption: e.caption || '',
+          date: e.date || null,
+        })))
+      })
+      .catch(() => {})
     return () => { cancelled = true }
   }, [])
 
@@ -785,19 +711,21 @@ export default function About({ isActive }) {
         [ shoot the photos ]
       </p>
 
-      <PolaroidLayer
-        isActive={isActive}
-        onEnlargeRequest={setEnlargedSrc}
-        monitorRef={monitorRef}
-        isMobile={window.innerWidth < 768}
-        onFirstShot={() => setHasShot(true)}
-      />
+      {photoPool && photoPool.length > 0 && (
+        <PolaroidLayer
+          photoPool={photoPool}
+          isActive={isActive}
+          onEnlargeRequest={setEnlargedPhoto}
+          monitorRef={monitorRef}
+          isMobile={window.innerWidth < 768}
+          onFirstShot={() => setHasShot(true)}
+        />
+      )}
 
-      {enlargedSrc && (
+      {enlargedPhoto && (
         <EnlargedOverlay
-          src={enlargedSrc}
-          onClose={() => setEnlargedSrc(null)}
-          exifDates={exifDates}
+          photo={enlargedPhoto}
+          onClose={() => setEnlargedPhoto(null)}
         />
       )}
     </>

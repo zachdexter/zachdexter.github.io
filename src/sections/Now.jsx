@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { shipPosition, nowIconBounds, nowIconHitHandler, activeSection, shipControlDisabled } from '../store'
-import { LATELY_DATA } from '../data/lately'
+import { useLatelyData } from '../hooks/useLatelyData'
 import { useLastfmNowPlaying } from '../hooks/useLastfmNowPlaying'
 
 const PROXIMITY = 150
@@ -68,8 +68,8 @@ function MusicPanel({ nowPlaying }) {
   </>
 }
 
-function BookPanel() {
-  const d = LATELY_DATA.book
+function BookPanel({ data }) {
+  const d = data
   return <>
     <div className="now-panel__header">CURRENTLY READING</div>
     <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
@@ -86,8 +86,8 @@ function BookPanel() {
   </>
 }
 
-function TVPanel() {
-  const d = LATELY_DATA.tv
+function TVPanel({ data }) {
+  const d = data
   return <>
     <div className="now-panel__header">NOW WATCHING</div>
     <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
@@ -266,8 +266,7 @@ function PhotoLightbox({ photos, startIdx, onClose }) {
   )
 }
 
-function PhotosPanel() {
-  const photos = LATELY_DATA.photos
+function PhotosPanel({ photos }) {
   const [lightboxIdx, setLightboxIdx] = useState(null)
 
   const openLightbox = useCallback((i) => {
@@ -320,8 +319,8 @@ function PhotosPanel() {
   </>
 }
 
-function GamePanel() {
-  const d = LATELY_DATA.game
+function GamePanel({ data }) {
+  const d = data
   return <>
     <div className="now-panel__header">&gt; CURRENTLY PLAYING:</div>
     <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
@@ -348,6 +347,7 @@ const PANEL_COMPS = {
 
 export default function Now({ isActive }) {
   const { nowPlaying } = useLastfmNowPlaying()
+  const { data: LATELY_DATA } = useLatelyData()
   const planetRefs  = useRef([])
   const panelRefs   = useRef([])
   const rafRef      = useRef(null)
@@ -706,7 +706,9 @@ export default function Now({ isActive }) {
         const PanelComp = PANEL_COMPS[planet.id]
         const extraProps = planet.id === 'music'
           ? { nowPlaying }
-          : {}
+          : planet.id === 'photos'
+          ? { photos: LATELY_DATA.photos }
+          : { data: LATELY_DATA[planet.id] }
         return (
           <div
             key={`panel-${planet.id}`}

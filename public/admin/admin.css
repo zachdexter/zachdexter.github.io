@@ -1,0 +1,178 @@
+:root {
+  --bg-deep: #05070f;
+  --panel-bg: rgba(8, 12, 25, 0.95);
+  --panel-border: rgba(100, 180, 255, 0.22);
+  --text-primary: #e8eeff;
+  --text-muted: #8899bb;
+  --accent: #7dd3fc;
+  --danger: #f87171;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+.hidden { display: none !important; }
+
+.screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.card {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 420px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card h1 { margin: 0; font-size: 20px; }
+.hint { color: var(--text-muted); font-size: 13px; line-height: 1.5; margin: 0; }
+
+input[type="password"], input[type="text"], textarea {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  width: 100%;
+}
+
+textarea { resize: vertical; min-height: 60px; }
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.card button[type="submit"] {
+  background: var(--accent);
+  color: #05070f;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.error { color: var(--danger); font-size: 13px; margin: 0; min-height: 1em; }
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--panel-border);
+}
+.app-header h1 { font-size: 16px; margin: 0; white-space: nowrap; }
+
+.tabs { display: flex; gap: 8px; flex: 1; }
+.tab-btn {
+  background: transparent;
+  border: 1px solid var(--panel-border);
+  color: var(--text-muted);
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+}
+.tab-btn.active { color: var(--accent); border-color: var(--accent); }
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-decoration: underline;
+}
+
+.tab-panel { padding: 20px 24px 60px; }
+
+.panel-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.upload-btn, .save-btn {
+  background: rgba(125,211,252,0.12);
+  border: 1px solid var(--panel-border);
+  color: var(--accent);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+.save-btn { background: var(--accent); color: #05070f; font-weight: 600; border: none; }
+.save-btn:disabled { opacity: 0.5; cursor: default; }
+
+.status { font-size: 12px; color: var(--text-muted); }
+.status.ok { color: #4ade80; }
+.status.err { color: var(--danger); }
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.photo-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.photo-card img { width: 100%; height: 140px; object-fit: cover; display: block; background: #111; }
+.photo-card .fields { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.photo-card .fields input { font-size: 12px; padding: 6px 8px; }
+.photo-card .filename { font-size: 10px; color: var(--text-muted); word-break: break-all; }
+.photo-card .remove-btn {
+  align-self: flex-start;
+  background: none;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+}
+.photo-card.pending { border-color: var(--accent); }
+.photo-card.marked-delete { opacity: 0.4; }
+
+.lately-section {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.lately-section h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); margin: 0 0 12px; }
+.lately-field { margin-bottom: 10px; }
+.lately-field label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+
+.lately-photo-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.lately-photo-row img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; background: #111; }
+.lately-photo-row input { font-size: 12px; padding: 6px 8px; }
