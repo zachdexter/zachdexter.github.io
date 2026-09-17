@@ -7,10 +7,10 @@
     "description": ""
   },
   "tv": {
-    "title": "Solo Leveling",
-    "type": "TV Show",
-    "image": "sololeveling-1785353086146.jpg",
-    "description": "Slowly watching through this with gf, pretty mid but it's good to watch while eating."
+    "title": "Nothing",
+    "type": "",
+    "image": null,
+    "description": "Been too much of a chud recently, not watching any shows."
   },
   "book": {
     "title": "Nothing rn",
@@ -27,28 +27,28 @@
   },
   "photos": [
     {
-      "image": "photo3.jpeg",
-      "caption": "Recent trip to Vietnam. This picture is from Hang Mua where I climbed up ~500 steps for this crazy view.",
-      "date": "03/22/26",
-      "location": "Ninh Binh, Vietnam"
+      "image": "IMG_5319-1789669147298.jpg",
+      "caption": "SWE internship at Dark Wolf Solutions for the summer! Excited to spend the time in DC, been missing it.",
+      "date": "",
+      "location": "Washington, DC"
     },
     {
-      "image": "photo4.JPG",
-      "caption": "Girlfriend recently came to visit for a week! This picture is from us climbing the Sydney Harbour Bridge, would highly recommend doing this if you're ever in Sydney.",
-      "date": "03/10/26",
-      "location": "Sydney, Australia"
+      "image": "IMG_4589-1789669227055.jpg",
+      "caption": "Day trip to Shenandoah with my lovely girlfriend!",
+      "date": "",
+      "location": "Shenandoah, Virginia"
     },
     {
-      "image": "photo1.jpeg",
-      "caption": "Recent trip with some friends to New Zealand! The landscape everywhere was beautiful, felt like I was living in a Windows homescreen.",
-      "date": "02/01/26",
-      "location": "Queenstown, New Zealand"
+      "image": "IMG_5859-1789669273903.jpg",
+      "caption": "Spent a good amount of the summer working on a website for the GW climbing club. Super happy with how it's turned out, doesn't look like much but there's a lot of backend work for the eboard that will hopefully last until after I graduate.",
+      "date": "",
+      "location": ""
     },
     {
-      "image": "photo2.jpeg",
-      "caption": "Australia Day in Sydney! Picture is from the harbor just outside of the Opera House, pretty cool light show and fireworks.",
-      "date": "01/26/26",
-      "location": "Sydney, Australia"
+      "image": "082726_MD_GWCCSession_27-1789669355126.jpg",
+      "caption": "So happy for the school year to have started back up and to be climbing with friends again, missed this the most when I was abroad.",
+      "date": "",
+      "location": "Crystal City, Virginia"
     }
   ]
 }
