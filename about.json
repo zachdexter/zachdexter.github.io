@@ -1,29 +1,187 @@
 [
-  { "filename": "gwccOutdoorSmallGroupPic2.jpg", "caption": "", "date": null },
-  { "filename": "gwccOutdoorTopDownShot.jpg", "caption": "", "date": null },
-  { "filename": "meBenOutdoor.JPG", "caption": "", "date": "Oct 2025" },
-  { "filename": "gwccOutdoorSmallGroupPic.JPG", "caption": "", "date": null },
-  { "filename": "gwccGroupHikingWithCrashpads.jpg", "caption": "", "date": null },
-  { "filename": "meBenOutdoor2.JPG", "caption": "", "date": "Oct 2025" },
-  { "filename": "meLayingOnCrashpadOutdoor.JPG", "caption": "", "date": null },
-  { "filename": "meOutdoorActionShot2.JPG", "caption": "", "date": null },
-  { "filename": "meOutdoorActionShot3.JPG", "caption": "", "date": null },
-  { "filename": "meOutdoorActionShot4.JPG", "caption": "", "date": null },
-  { "filename": "meOutdoorMushroomHat.JPG", "caption": "", "date": null },
-  { "filename": "meOutdoorActionShot1.JPG", "caption": "", "date": null },
-  { "filename": "meClimbingIndoors.jpeg", "caption": "", "date": null },
-  { "filename": "gwccGroupPictureOutside.jpeg", "caption": "", "date": null },
-  { "filename": "meHiking.JPEG", "caption": "", "date": null },
-  { "filename": "meDrivingNZ.jpg", "caption": "", "date": "Feb 2026" },
-  { "filename": "meNZBridge.jpg", "caption": "", "date": "Feb 2026" },
-  { "filename": "meGeorgeNZPier.jpg", "caption": "", "date": "Feb 2026" },
-  { "filename": "meLuge.png", "caption": "", "date": "Feb 2026" },
-  { "filename": "meGeorgeBondiCliff.png", "caption": "", "date": "Jan 2026" },
-  { "filename": "meOutdoorActionshot5.jpg", "caption": "", "date": "Nov 2025" },
-  { "filename": "meBenOutdoor3.jpg", "caption": "", "date": "Oct 2025" },
-  { "filename": "nam_bike.jpg", "caption": "", "date": "March 2026" },
-  { "filename": "nam_bridge.jpeg", "caption": "", "date": "March 2026" },
-  { "filename": "nam_stair_temple.jpeg", "caption": "", "date": "March 2026" },
-  { "filename": "nam_water_temple.jpeg", "caption": "", "date": "March 2026" },
-  { "filename": "nam_boat.jpeg", "caption": "", "date": "March 2026" }
+  {
+    "filename": "gwccOutdoorSmallGroupPic2.jpg",
+    "caption": "Northwest Branch",
+    "date": null
+  },
+  {
+    "filename": "gwccOutdoorTopDownShot.jpg",
+    "caption": "Northwest Branch",
+    "date": null
+  },
+  {
+    "filename": "meBenOutdoor.JPG",
+    "caption": "New River Gorge",
+    "date": "Oct 2025"
+  },
+  {
+    "filename": "gwccOutdoorSmallGroupPic.JPG",
+    "caption": "New River Gorge",
+    "date": null
+  },
+  {
+    "filename": "gwccGroupHikingWithCrashpads.jpg",
+    "caption": "Northwest Branch",
+    "date": null
+  },
+  {
+    "filename": "meBenOutdoor2.JPG",
+    "caption": "New River Gorge",
+    "date": "Oct 2025"
+  },
+  {
+    "filename": "meLayingOnCrashpadOutdoor.JPG",
+    "caption": "Northwest Branch",
+    "date": null
+  },
+  {
+    "filename": "meOutdoorActionShot2.JPG",
+    "caption": "New River Gorge",
+    "date": null
+  },
+  {
+    "filename": "meOutdoorActionShot3.JPG",
+    "caption": "New River Gorge",
+    "date": null
+  },
+  {
+    "filename": "meOutdoorActionShot4.JPG",
+    "caption": "New River Gorge",
+    "date": null
+  },
+  {
+    "filename": "meOutdoorMushroomHat.JPG",
+    "caption": "New River Gorge",
+    "date": null
+  },
+  {
+    "filename": "meOutdoorActionShot1.JPG",
+    "caption": "Northwest Branch",
+    "date": null
+  },
+  {
+    "filename": "meClimbingIndoors.jpeg",
+    "caption": "",
+    "date": null
+  },
+  {
+    "filename": "gwccGroupPictureOutside.jpeg",
+    "caption": "Northwest Branch",
+    "date": null
+  },
+  {
+    "filename": "meHiking.JPEG",
+    "caption": "Mt Tammany",
+    "date": null
+  },
+  {
+    "filename": "meDrivingNZ.jpg",
+    "caption": "New Zealand",
+    "date": "Feb 2026"
+  },
+  {
+    "filename": "meNZBridge.jpg",
+    "caption": "New Zealand",
+    "date": "Feb 2026"
+  },
+  {
+    "filename": "meGeorgeNZPier.jpg",
+    "caption": "New Zealand",
+    "date": "Feb 2026"
+  },
+  {
+    "filename": "meLuge.png",
+    "caption": "Queenstown, NZ",
+    "date": "Feb 2026"
+  },
+  {
+    "filename": "meGeorgeBondiCliff.png",
+    "caption": "Bondi Beach",
+    "date": "Jan 2026"
+  },
+  {
+    "filename": "meOutdoorActionshot5.jpg",
+    "caption": "Northwest Branch",
+    "date": "Nov 2025"
+  },
+  {
+    "filename": "meBenOutdoor3.jpg",
+    "caption": "New River Gorge",
+    "date": "Oct 2025"
+  },
+  {
+    "filename": "nam_bike.jpg",
+    "caption": "Vietnam",
+    "date": "March 2026"
+  },
+  {
+    "filename": "nam_bridge.jpeg",
+    "caption": "Vietnam",
+    "date": "March 2026"
+  },
+  {
+    "filename": "nam_stair_temple.jpeg",
+    "caption": "Vietnam",
+    "date": "March 2026"
+  },
+  {
+    "filename": "nam_water_temple.jpeg",
+    "caption": "Vietnam",
+    "date": "March 2026"
+  },
+  {
+    "filename": "nam_boat.jpeg",
+    "caption": "Vietnam",
+    "date": "March 2026"
+  },
+  {
+    "filename": "IMG_4072-1789669878790.jpg",
+    "caption": "Somewhere in Australia",
+    "date": null
+  },
+  {
+    "filename": "IMG_4329-1789669878794.jpg",
+    "caption": "Bruny Island",
+    "date": null
+  },
+  {
+    "filename": "IMG_4304-1789669878794.jpg",
+    "caption": "Bruny Island",
+    "date": null
+  },
+  {
+    "filename": "IMG_4362-1789669878794.jpg",
+    "caption": "Bruny Island",
+    "date": null
+  },
+  {
+    "filename": "IMG_4512-1789669878795.jpg",
+    "caption": "Tasmania",
+    "date": null
+  },
+  {
+    "filename": "IMG_4619-1789669878795.jpg",
+    "caption": "Tasmania",
+    "date": null
+  },
+  {
+    "filename": "IMG_4982-1789669878795.jpg",
+    "caption": "Great Barrier Reef",
+    "date": null
+  },
+  {
+    "filename": "IMG_0499-1789669878795.jpg",
+    "caption": "Shenandoah",
+    "date": null
+  },
+  {
+    "filename": "IMG_4600-1789669878795.jpg",
+    "caption": "Shenandoah",
+    "date": null
+  },
+  {
+    "filename": "a72a368b-69df-407c-96c9-991c9d4c747a-1789669878795.jpg",
+    "caption": "Skydiving!",
+    "date": null
+  }
 ]
